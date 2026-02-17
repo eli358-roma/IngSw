@@ -89,4 +89,35 @@ public class HackathonController {
     public ResponseEntity<List<User>> getMentors(@PathVariable Long id) {
         return ResponseEntity.ok(hackathonService.getMentors(id));
     }
+
+    @GetMapping("/{id}/statistics")
+    public ResponseEntity<Map<String, Object>> getHackathonStatistics(@PathVariable Long id) {
+        return ResponseEntity.ok(hackathonService.getHackathonStatistics(id));
+    }
+
+    @GetMapping("/{id}/can-access/{userId}")
+    public ResponseEntity<Map<String, Boolean>> checkAccess(
+            @PathVariable Long id,
+            @PathVariable Long userId,
+            @RequestParam String userRole) {
+
+        boolean canAccess = hackathonService.canAccessHackathon(id, userId, userRole);
+
+        Map<String, Boolean> response = new HashMap<>();
+        response.put("canAccess", canAccess);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/status-summary")
+    public ResponseEntity<Map<String, Long>> getStatusSummary() {
+        Map<String, Long> summary = new HashMap<>();
+
+        for (String status : List.of("INSCRIZIONE", "IN_CORSO", "IN_VALUTAZIONE", "CONCLUSO")) {
+            summary.put(status, (long) hackathonService.getHackathonsByStatus(status).size());
+        }
+
+        return ResponseEntity.ok(summary);
+    }
+
 }
