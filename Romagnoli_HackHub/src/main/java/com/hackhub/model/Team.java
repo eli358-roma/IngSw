@@ -60,9 +60,7 @@ public class Team {
 
     // ========== METODI DI UTILITÀ ==========
 
-    /**
-     * Controlla se il team ha raggiunto il numero massimo di membri
-     */
+    //Controlla se il team ha raggiunto il numero massimo di membri
     public boolean isFull() {
         if (hackathon == null || members == null) {
             return false;
@@ -70,9 +68,7 @@ public class Team {
         return members.size() >= hackathon.getMaxTeamSize();
     }
 
-    /**
-     * Aggiunge un membro al team
-     */
+    //Aggiunge un membro al team
     public boolean addMember(User user) {
         if (user == null) {
             throw new IllegalArgumentException("L'utente non può essere null");
@@ -101,9 +97,7 @@ public class Team {
         return true;
     }
 
-    /**
-     * Rimuove un membro dal team
-     */
+    //Rimuove un membro dal team
     public boolean removeMember(User user) {
         if (user == null) {
             return false;
@@ -125,30 +119,22 @@ public class Team {
         return true;
     }
 
-    /**
-     * Controlla se un utente è membro del team
-     */
+    //Controlla se un utente è membro del team
     public boolean hasMember(User user) {
         return members != null && members.contains(user);
     }
 
-    /**
-     * Controlla se un utente è il creatore del team
-     */
+    //Controlla se un utente è il creatore del team
     public boolean isCreator(User user) {
         return creator != null && creator.equals(user);
     }
 
-    /**
-     * Ottiene il numero di membri attuali
-     */
+    //Ottiene il numero di membri attuali
     public int getMemberCount() {
         return members != null ? members.size() : 0;
     }
 
-    /**
-     * Ottiene la lista dei nomi dei membri
-     */
+    //Ottiene la lista dei nomi dei membri del team
     public List<String> getMemberNames() {
         List<String> names = new ArrayList<>();
         if (members != null) {
@@ -159,18 +145,13 @@ public class Team {
         return names;
     }
 
-    /**
-     * Sottomette il progetto del team
-     */
     public void submitProject(String projectName, String projectDescription, String repositoryUrl) {
         this.projectName = projectName;
         this.projectDescription = projectDescription;
         this.repositoryUrl = repositoryUrl;
     }
 
-    /**
-     * Valuta il team (metodo chiamato dal giudice)
-     */
+    //Valuta il team è un metodo che viene chiamato dal giudice
     public void evaluate(Double score, String feedback) {
         if (score < 0 || score > 10) {
             throw new IllegalArgumentException("Il punteggio deve essere tra 0 e 10");
@@ -179,24 +160,18 @@ public class Team {
         this.judgeFeedback = feedback;
     }
 
-    /**
-     * Resetta la valutazione
-     */
+    //Resetta la valutazione
     public void resetEvaluation() {
         this.score = null;
         this.judgeFeedback = null;
     }
 
-    /**
-     * Controlla se il team ha già inviato un progetto
-     */
+    //Controlla se il team ha già inviato un progetto
     public boolean hasSubmittedProject() {
         return projectName != null && !projectName.trim().isEmpty();
     }
 
-    /**
-     * Controlla se il team è stato valutato
-     */
+    //Controlla se il team è stato valutato
     public boolean isEvaluated() {
         return score != null;
     }
@@ -249,4 +224,39 @@ public class Team {
                 ", score=" + score +
                 '}';
     }
+
+    public void validateForSubmission() {
+        if (hackathon == null) {
+            throw new IllegalStateException("Il team non è associato a nessun hackathon");
+        }
+
+        if (!hackathon.isInProgress()) {
+            throw new IllegalStateException("L'hackathon non è in corso. Stato attuale: " +
+                    hackathon.getStatus());
+        }
+
+        if (members == null || members.isEmpty()) {
+            throw new IllegalStateException("Il team non ha membri");
+        }
+
+        if (projectName != null && !projectName.isEmpty()) {
+            // È già stato inviato un progetto, possiamo aggiornarlo
+            System.out.println("⚠️ Aggiornamento progetto esistente per il team " + name);
+        }
+    }
+
+    public void validateForEvaluation() {
+        if (!hasSubmittedProject()) {
+            throw new IllegalStateException("Il team non ha ancora inviato un progetto");
+        }
+
+        if (score != null) {
+            throw new IllegalStateException("Il team è già stato valutato");
+        }
+
+        if (hackathon == null || !"IN_VALUTAZIONE".equals(hackathon.getStatus())) {
+            throw new IllegalStateException("L'hackathon non è in fase di valutazione");
+        }
+    }
+
 }
