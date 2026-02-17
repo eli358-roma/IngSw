@@ -38,6 +38,9 @@ public class Hackathon {
     @Column(nullable = false)
     private Integer maxTeamSize;
 
+    @Column
+    private Double prizeMoney;
+
     // ========== RELAZIONI ==========
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -82,10 +85,18 @@ public class Hackathon {
         this.maxTeamSize = maxTeamSize;
         this.organizer = organizer;
         this.status = "INSCRIZIONE";
+        this.prizeMoney = 0.0;
     }
 
+    public Hackathon(String name, String description, String rules,
+                     LocalDateTime registrationDeadline, LocalDateTime startDate,
+                     LocalDateTime endDate, Integer maxTeamSize, User organizer, Double prizeMoney) {
+        this(name, description, rules, registrationDeadline, startDate, endDate, maxTeamSize, organizer);
+        this.prizeMoney = prizeMoney;
+    }
+    
     // ========== METODI DI UTILITÀ ==========
-
+    
     public boolean isRegistrationOpen() {
         return "INSCRIZIONE".equals(status) &&
                 LocalDateTime.now().isBefore(registrationDeadline);
@@ -128,6 +139,9 @@ public class Hackathon {
     public Integer getMaxTeamSize() { return maxTeamSize; }
     public void setMaxTeamSize(Integer maxTeamSize) { this.maxTeamSize = maxTeamSize; }
 
+    public Double getPrizeMoney() { return prizeMoney; }
+    public void setPrizeMoney(Double prizeMoney) { this.prizeMoney = prizeMoney; }
+
     public User getOrganizer() { return organizer; }
     public void setOrganizer(User organizer) { this.organizer = organizer; }
 
@@ -152,4 +166,5 @@ public class Hackathon {
                 ", teams=" + (teams != null ? teams.size() : 0) +
                 '}';
     }
+
 }
