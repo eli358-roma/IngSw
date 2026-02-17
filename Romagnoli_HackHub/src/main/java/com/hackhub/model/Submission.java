@@ -14,8 +14,11 @@ public class Submission {
     private String repositoryUrl;
     private LocalDateTime submissionDate;
     private boolean isFinal;
-    private Double score;  // 0-10
+    private Double score;
     private String judgeFeedback;
+
+    @ManyToOne
+    @JoinColumn(name="evaluated_By_id")
     private User evaluatedBy; // Judge che ha valutato
 
 
@@ -57,4 +60,14 @@ public class Submission {
 
     public Team getTeam() { return team; }
     public void setTeam(Team team) { this.team = team; }
+
+    public Double getScore() { return score; }
+    public void setScore(Double score) { this.score = score; }
+
+    public String getJudgeFeedback() { return judgeFeedback; }
+    public void setJudgeFeedback(String judgeFeedback) { this.judgeFeedback = judgeFeedback; }
+
+    public User getEvaluatedBy() { return evaluatedBy; }
+    public void setEvaluatedBy(User evaluatedBy) { this.evaluatedBy = evaluatedBy; }
+
 }
