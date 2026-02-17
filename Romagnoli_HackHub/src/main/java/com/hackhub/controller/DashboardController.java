@@ -1,9 +1,11 @@
 package com.hackhub.controller;
 
 import com.hackhub.model.Hackathon;
+import com.hackhub.model.SupportRequest;
 import com.hackhub.model.Team;
 import com.hackhub.model.User;
 import com.hackhub.service.HackathonService;
+import com.hackhub.service.SupportRequestService;
 import com.hackhub.service.TeamService;
 import com.hackhub.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +14,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 @Controller
 public class DashboardController {
@@ -166,3 +170,4 @@ public class DashboardController {
         }
     }
 }
+
