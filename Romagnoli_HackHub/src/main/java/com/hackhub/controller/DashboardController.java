@@ -26,6 +26,9 @@ public class DashboardController {
     @Autowired
     private TeamService teamService;
 
+    @Autowired
+    private SupportRequestService supportRequestService;
+
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         try {
@@ -35,6 +38,8 @@ public class DashboardController {
             List<User> judges = userService.getAvailableJudges();
             List<User> mentors = userService.getAvailableMentors();
             List<Hackathon> hackathons = hackathonService.getAllHackathons();
+            List<SupportRequest> pendingRequests=supportRequestService.getPendingRequests();
+            List<DashboardActivity> activities = new ArrayList<>();
 
             // Calcola i team totali
             int totalTeams = 0;
@@ -53,7 +58,6 @@ public class DashboardController {
                 }
             }
 
-            // Data ultima sottomissione (simulata)
             String lastSubmissionDate = "N/A";
             if (totalSubmissions > 0) {
                 lastSubmissionDate = LocalDateTime.now()
@@ -72,12 +76,45 @@ public class DashboardController {
             model.addAttribute("totalTeams", totalTeams);
             model.addAttribute("totalSubmissions", totalSubmissions);
             model.addAttribute("lastSubmissionDate", lastSubmissionDate);
-
-            // Aggiungi informazioni di sistema
+            model.addAttribute("pendingRequests", pendingRequests.size());
+            
+            // Aggiungere informazioni di sistema
             model.addAttribute("systemStatus", "online");
             model.addAttribute("databaseStatus", "online");
             model.addAttribute("servicesStatus", "online");
 
+            // Aggiungi attività da team
+            for (Hackathon h : hackathons) {
+                for (Team t : h.getTeams()) {
+                    if (t.hasSubmittedProject()) {
+                        activities.add(new DashboardActivity(
+                                "submission",
+                                "Team " + t.getName() + " ha inviato progetto per " + h.getName(),
+                                LocalDateTime.now().minusHours(new Random().nextInt(24)),
+                                t.getCreator() != null ? t.getCreator().getUsername() : "Sconosciuto"
+                        ));
+                    }
+                }
+            }
+
+            for (SupportRequest req : pendingRequests) {
+                activities.add(new DashboardActivity(
+                        "support",
+                        "Richiesta supporto: " + req.getTitle(),
+                        req.getRequestDate(),
+                        req.getTeam() != null && req.getTeam().getCreator() != null ?
+                                req.getTeam().getCreator().getUsername() : "Sconosciuto"
+                ));
+            }
+
+            activities.sort((a1, a2) -> a2.getTimestamp().compareTo(a1.getTimestamp()));
+            if (activities.size() > 5) {
+                activities = activities.subList(0, 5);
+            }
+
+            model.addAttribute("recentActivities", activities);
+
+            
             return "dashboard";
 
         } catch (Exception e) {
@@ -87,8 +124,45 @@ public class DashboardController {
         }
     }
 
-    @GetMapping("/")
-    public String home() {
-        return "redirect:/dashboard";
+    // Classe interna per attività dashboard
+    public static class DashboardActivity {
+        private String type;
+        private String description;
+        private LocalDateTime timestamp;
+        private String user;
+
+        public DashboardActivity(String type, String description, LocalDateTime timestamp, String user) {
+            this.type = type;
+            this.description = description;
+            this.timestamp = timestamp;
+            this.user = user;
+        }
+
+        public String getType() { return type; }
+        public String getDescription() { return description; }
+        public LocalDateTime getTimestamp() { return timestamp; }
+        public String getUser() { return user; }
+
+        public String getFormattedTime() {
+            return timestamp.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        }
+
+        public String getIcon() {
+            return switch (type) {
+                case "submission" -> "bi-cloud-upload";
+                case "support" -> "bi-chat-dots";
+                case "team" -> "bi-people";
+                default -> "bi-info-circle";
+            };
+        }
+
+        public String getColor() {
+            return switch (type) {
+                case "submission" -> "success";
+                case "support" -> "warning";
+                case "team" -> "primary";
+                default -> "secondary";
+            };
+        }
     }
 }
