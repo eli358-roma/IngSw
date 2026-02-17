@@ -76,9 +76,7 @@ public class User {
         return team.addMember(this);
     }
 
-    /**
-     * Lascia il team corrente
-     */
+    //Lascia il team corrente
     public boolean leaveTeam() {
         if (this.team == null) {
             return false; // Non è in un team
@@ -91,37 +89,27 @@ public class User {
         return removed;
     }
 
-    /**
-     * Controlla se l'utente è in un team
-     */
+    //Controlla se l'utente è in un team
     public boolean isInTeam() {
         return this.team != null;
     }
 
-    /**
-     * Controlla se l'utente è il creatore del suo team
-     */
+    //Controlla se l'utente è il creatore del suo team
     public boolean isTeamCreator() {
         return this.team != null && this.team.isCreator(this);
     }
 
-    /**
-     * Controlla se l'utente può creare/gestire hackathon
-     */
+    //Controlla se l'utente può creare/gestire hackathon
     public boolean canCreateHackathon() {
         return "ORGANIZER".equals(this.role);
     }
 
-    /**
-     * Controlla se l'utente può valutare progetti
-     */
+    //Controlla se l'utente può valutare progetti
     public boolean canEvaluateProjects() {
         return "JUDGE".equals(this.role);
     }
 
-    /**
-     * Controlla se l'utente può fare da mentore
-     */
+    //Controlla se l'utente può fare da mentore
     public boolean canMentor() {
         return "MENTOR".equals(this.role);
     }
@@ -156,4 +144,58 @@ public class User {
                 ", team=" + (team != null ? team.getName() : "none") +
                 '}';
     }
+
+    //Valida prima di unirsi a un team
+    public void validateForTeamJoin(Team targetTeam) {
+        if (targetTeam == null) {
+            throw new IllegalArgumentException("Team non valido");
+        }
+
+        if (this.team != null) {
+            throw new IllegalStateException("Utente già membro del team: " + this.team.getName());
+        }
+
+        if (targetTeam.isFull()) {
+            throw new IllegalStateException("Il team è al completo");
+        }
+
+        Hackathon hackathon = targetTeam.getHackathon();
+        if (hackathon == null || !hackathon.isRegistrationOpen()) {
+            throw new IllegalStateException("Le iscrizioni per questo hackathon sono chiuse");
+        }
+    }
+
+    //Ottiene il ruolo in italiano
+    public String getRoleItalian() {
+        return switch (role) {
+            case "ORGANIZER" -> "Organizzatore";
+            case "JUDGE" -> "Giudice";
+            case "MENTOR" -> "Mentore";
+            case "USER" -> "Partecipante";
+            default -> role;
+        };
+    }
+
+    //Verifica se l'utente ha permessi di staff per un hackathon
+    public boolean isStaffForHackathon(Hackathon hackathon) {
+        if (hackathon == null) return false;
+
+        // Organizzatore
+        if (hackathon.getOrganizer() != null && hackathon.getOrganizer().equals(this)) {
+            return true;
+        }
+
+        // Giudice
+        if (hackathon.getJudge() != null && hackathon.getJudge().equals(this)) {
+            return true;
+        }
+
+        // Mentore
+        if (hackathon.getMentors() != null && hackathon.getMentors().contains(this)) {
+            return true;
+        }
+
+        return false;
+    }
+
 }
