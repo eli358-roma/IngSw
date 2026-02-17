@@ -5,6 +5,7 @@ import com.hackhub.service.TeamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,4 +65,38 @@ public class TeamController {
     public ResponseEntity<List<Team>> getTeamsByHackathon(@PathVariable Long hackathonId) {
         return ResponseEntity.ok(teamService.getTeamsByHackathon(hackathonId));
     }
+
+    @GetMapping("/hackathon/{hackathonId}/statistics")
+    public ResponseEntity<TeamService.TeamStatistics> getTeamStatistics(@PathVariable Long hackathonId) {
+        return ResponseEntity.ok(teamService.getTeamStatistics(hackathonId));
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Team>> getTeamsByUser(@PathVariable Long userId) {
+        return ResponseEntity.ok(teamService.findTeamsByMember(userId));
+    }
+
+    @GetMapping("/{teamId}/can-join/{userId}")
+    public ResponseEntity<Map<String, Object>> canJoinTeam(
+            @PathVariable Long teamId,
+            @PathVariable Long userId) {
+
+        boolean canJoin = teamService.canJoinTeam(teamId, userId);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("canJoin", canJoin);
+
+        if (!canJoin) {
+            Team team = teamService.getTeamById(teamId);
+
+            if (team.isFull()) {
+                response.put("reason", "Team al completo");
+            } else {
+                response.put("reason", "Utente già in un altro team");
+            }
+        }
+
+        return ResponseEntity.ok(response);
+    }
+
 }
