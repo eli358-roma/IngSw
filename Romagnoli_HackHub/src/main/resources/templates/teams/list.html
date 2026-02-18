@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Lista Team</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-color: #4361ee; --secondary-color: #3a0ca3; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .team-card {
+            transition: transform 0.3s;
+        }
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-code-slash me-2"></i><strong>HackHub</strong></a>
+        <div class="navbar-nav ms-auto">
+            <a href="/dashboard" class="nav-link"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-people me-2 text-primary"></i>Lista Team</h1>
+        <a href="/teams/create" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i>Nuovo Team
+        </a>
+    </div>
+
+    <div th:if="${teams != null and !teams.isEmpty()}">
+        <div class="row">
+            <div class="col-md-4 mb-4" th:each="team : ${teams}">
+                <div class="card h-100 team-card">
+                    <div class="card-body">
+                        <h5 class="card-title" th:text="${team.name}">Nome Team</h5>
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            Hackathon: <span th:text="${team.hackathon != null ? team.hackathon.name : 'N/D'}">Hackathon</span>
+                        </h6>
+                        <p class="card-text">
+                            <small>Creato da: <span th:text="${team.creator != null ? team.creator.username : 'N/D'}">Admin</span></small><br>
+                            <small>Membri: <span th:text="${#lists.size(team.members)}"></span>/<span th:text="${team.hackathon != null ? team.hackathon.maxTeamSize : '?'}"></span></small>
+                        </p>
+                        <div class="mb-2">
+                                <span class="badge bg-info me-1" th:each="member : ${team.members}"
+                                      th:text="${member.username}">Membro</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                                <span th:class="${team.hasSubmittedProject()} ? 'text-success' : 'text-secondary'">
+                                    <i class="bi" th:classappend="${team.hasSubmittedProject()} ? 'bi-check-circle' : 'bi-clock'"></i>
+                                    <span th:text="${team.hasSubmittedProject()} ? 'Progetto inviato' : 'In attesa'"></span>
+                                </span>
+                            <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-sm btn-outline-primary">
+                                Dettagli
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div th:if="${teams == null or teams.isEmpty()}" class="text-center py-5">
+        <i class="bi bi-people display-1 text-muted"></i>
+        <h3 class="mt-3 text-muted">Nessun team disponibile</h3>
+        <a href="/teams/create" class="btn btn-primary mt-3">
+            <i class="bi bi-plus-circle me-2"></i>Crea Nuovo Team
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

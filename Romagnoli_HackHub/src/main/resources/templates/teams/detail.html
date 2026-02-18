@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'HackHub - ' + ${team.name}">HackHub - Dettaglio Team</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-color: #4361ee; --secondary-color: #3a0ca3; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .detail-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-code-slash me-2"></i><strong>HackHub</strong></a>
+    </div>
+</nav>
+
+<div class="container mt-4" th:with="t=${team}">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/teams">Team</a></li>
+            <li class="breadcrumb-item active" th:text="${t.name}">Nome Team</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="detail-card">
+                <h5><i class="bi bi-info-circle me-2 text-primary"></i>Informazioni Team</h5>
+                <hr>
+                <p><strong>Nome:</strong> <span th:text="${t.name}"></span></p>
+                <p><strong>Creato da:</strong> <span th:text="${t.creator != null ? t.creator.username : 'N/D'}"></span></p>
+                <p><strong>Hackathon:</strong>
+                    <a th:href="@{/hackathons/{id}(id=${t.hackathon.id})}" th:text="${t.hackathon.name}"></a>
+                </p>
+                <p><strong>Membri:</strong> <span th:text="${#lists.size(t.members)}"></span>/<span th:text="${t.hackathon.maxTeamSize}"></span></p>
+            </div>
+
+            <div class="detail-card">
+                <h5><i class="bi bi-people me-2 text-primary"></i>Membri</h5>
+                <hr>
+                <ul class="list-group">
+                    <li class="list-group-item d-flex justify-content-between align-items-center"
+                        th:each="member : ${t.members}">
+                            <span>
+                                <i class="bi bi-person-circle me-2"></i>
+                                <span th:text="${member.username}"></span>
+                            </span>
+                        <span class="badge bg-secondary" th:if="${member.id == t.creator.id}">Creatore</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="detail-card">
+                <h5><i class="bi bi-upload me-2 text-primary"></i>Progetto</h5>
+                <hr>
+
+                <div th:if="${t.hasSubmittedProject()}">
+                    <h6 th:text="${t.projectName}">Nome Progetto</h6>
+                    <p th:text="${t.projectDescription}">Descrizione...</p>
+                    <p>
+                        <strong>Repository:</strong>
+                        <a th:href="${t.repositoryUrl}" target="_blank" th:text="${t.repositoryUrl}"></a>
+                    </p>
+
+                    <div th:if="${t.evaluated}">
+                        <hr>
+                        <h6 class="text-success">Valutazione</h6>
+                        <p><strong>Punteggio:</strong> <span th:text="${t.score}"></span>/10</p>
+                        <p><strong>Feedback:</strong> <span th:text="${t.judgeFeedback}"></span></p>
+                    </div>
+                    <div th:if="${!t.evaluated}">
+                        <p class="text-muted">In attesa di valutazione</p>
+                    </div>
+                </div>
+
+                <div th:if="${!t.hasSubmittedProject()}">
+                    <p class="text-muted">Nessun progetto inviato</p>
+                    <form id="submissionForm" onsubmit="submitProject(event)">
+                        <div class="mb-3">
+                            <label class="form-label">Nome Progetto</label>
+                            <input type="text" class="form-control" id="projectName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrizione</label>
+                            <textarea class="form-control" id="projectDescription" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">URL Repository</label>
+                            <input type="url" class="form-control" id="repositoryUrl" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Invia Progetto</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Richieste di Supporto -->
+            <div class="detail-card">
+                <h5><i class="bi bi-chat-dots me-2 text-primary"></i>Richieste di Supporto</h5>
+                <hr>
+                <button class="btn btn-sm btn-outline-primary mb-3" onclick="showSupportForm()">
+                    <i class="bi bi-plus-circle me-1"></i>Nuova Richiesta
+                </button>
+
+                <div id="supportForm" style="display: none;" class="mb-3">
+                    <form onsubmit="createSupportRequest(event)">
+                        <div class="mb-2">
+                            <input type="text" class="form-control" id="supportTitle" placeholder="Titolo" required>
+                        </div>
+                        <div class="mb-2">
+                            <textarea class="form-control" id="supportDescription" placeholder="Descrizione" rows="2" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary">Invia</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="hideSupportForm()">Annulla</button>
+                    </form>
+                </div>
+
+                <p class="text-muted text-center py-3">Funzionalità in sviluppo</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function submitProject(event) {
+        event.preventDefault();
+        const data = {
+            projectName: document.getElementById('projectName').value,
+            description: document.getElementById('projectDescription').value,
+            repositoryUrl: document.getElementById('repositoryUrl').value
+        };
+
+        fetch('/api/teams/' + [[${team.id}]] + '/submit', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Progetto inviato con successo!');
+                location.reload();
+            } else {
+                alert('Errore durante l\'invio');
+            }
+        })
+        .catch(error => alert('Errore: ' + error));
+    }
+
+    function showSupportForm() {
+        document.getElementById('supportForm').style.display = 'block';
+    }
+
+    function hideSupportForm() {
+        document.getElementById('supportForm').style.display = 'none';
+    }
+
+    function createSupportRequest(event) {
+        event.preventDefault();
+        const data = {
+            teamId: [[${team.id}]],
+            title: document.getElementById('supportTitle').value,
+            description: document.getElementById('supportDescription').value
+        };
+
+        fetch('/api/support-requests', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Richiesta di supporto creata!');
+                hideSupportForm();
+            } else {
+                alert('Errore durante la creazione');
+            }
+        })
+        .catch(error => alert('Errore: ' + error));
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Crea Hackathon</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <h1>Crea Nuovo Hackathon</h1>
+    <a href="/hackathons" class="btn btn-secondary mb-3">← Torna alla Lista</a>
+
+    <div class="card">
+        <div class="card-body">
+            <form th:action="@{/api/hackathons}" method="post">
+                <div class="mb-3">
+                    <label class="form-label">Nome</label>
+                    <input type="text" name="name" class="form-control" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Descrizione</label>
+                    <textarea name="description" class="form-control" rows="3" required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Regolamento</label>
+                    <textarea name="rules" class="form-control" rows="5" required></textarea>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Scadenza Iscrizioni</label>
+                        <input type="datetime-local" name="registrationDeadline" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Data Inizio</label>
+                        <input type="datetime-local" name="startDate" class="form-control" required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Data Fine</label>
+                        <input type="datetime-local" name="endDate" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Max Team Size</label>
+                        <input type="number" name="maxTeamSize" class="form-control" min="1" max="10" value="4" required>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Organizzatore</label>
+                        <select name="organizerId" class="form-select" required>
+                            <option value="">Seleziona...</option>
+                            <option th:each="org : ${organizers}"
+                                    th:value="${org.id}"
+                                    th:text="${org.username}"></option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Giudice (opzionale)</label>
+                        <select name="judgeId" class="form-select">
+                            <option value="">Nessun giudice</option>
+                            <option th:each="judge : ${judges}"
+                                    th:value="${judge.id}"
+                                    th:text="${judge.username}"></option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Mentori</label>
+                    <select name="mentorIds" class="form-select" multiple>
+                        <option th:each="mentor : ${mentors}"
+                                th:value="${mentor.id}"
+                                th:text="${mentor.username}"></option>
+                    </select>
+                    <small class="text-muted">Tieni premuto Ctrl per selezionare più mentori</small>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Crea Hackathon</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Aggiungi un po' di JavaScript per gestire il form
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {};
+        formData.forEach((value, key) => {
+            if (key === 'mentorIds' && this.querySelector('[name="mentorIds"]').multiple) {
+                if (!data[key]) data[key] = [];
+                data[key].push(value);
+            } else {
+                data[key] = value;
+            }
+        });
+
+        fetch('/api/hackathons', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert('Hackathon creato con successo! ID: ' + data.id);
+            window.location.href = '/hackathons';
+        })
+        .catch(error => {
+            alert('Errore durante la creazione: ' + error);
+        });
+    });
+</script>
+</body>
+</html>

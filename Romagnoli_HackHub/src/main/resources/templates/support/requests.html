@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Richieste Supporto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .request-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 5px solid;
+        }
+        .request-card.pending { border-left-color: #ffc107; }
+        .request-card.assigned { border-left-color: #0dcaf0; }
+        .request-card.resolved { border-left-color: #198754; }
+        .filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-code-slash me-2"></i><strong>HackHub</strong></a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-chat-dots me-2 text-primary"></i>Richieste di Supporto</h1>
+        <button class="btn btn-primary" onclick="showNewRequestForm()">
+            <i class="bi bi-plus-circle me-2"></i>Nuova Richiesta
+        </button>
+    </div>
+
+    <!-- Nuova Richiesta Form (nascosto di default) -->
+    <div id="newRequestForm" class="filter-section" style="display: none;">
+        <h5 class="mb-3">Nuova Richiesta di Supporto</h5>
+        <form onsubmit="createSupportRequest(event)">
+            <div class="mb-3">
+                <label class="form-label">Team</label>
+                <select class="form-select" id="requestTeam" required>
+                    <option value="">Seleziona team...</option>
+                    <option value="1">Code Masters</option>
+                    <option value="2">HealthTech</option>
+                    <option value="3">GreenDev</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Titolo</label>
+                <input type="text" class="form-control" id="requestTitle" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Descrizione</label>
+                <textarea class="form-control" id="requestDescription" rows="3" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Invia Richiesta</button>
+            <button type="button" class="btn btn-secondary" onclick="hideNewRequestForm()">Annulla</button>
+        </form>
+    </div>
+
+    <!-- Filtri -->
+    <div class="filter-section">
+        <div class="row">
+            <div class="col-md-3">
+                <select class="form-select">
+                    <option>Tutti gli stati</option>
+                    <option>In attesa</option>
+                    <option>Assegnato</option>
+                    <option>Risolto</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select">
+                    <option>Tutti i team</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select">
+                    <option>Tutti i mentori</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista Richieste -->
+    <div class="request-card pending">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5>Problema con repository Git</h5>
+                <p class="text-muted mb-2">Team: Code Masters • Inviato: 2 ore fa</p>
+                <p>Non riusciamo a pushare il codice sul repository, errore di autenticazione...</p>
+            </div>
+            <span class="badge bg-warning">In attesa</span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-person me-1"></i>
+                <span class="text-muted">In attesa di assegnazione</span>
+            </div>
+            <button class="btn btn-sm btn-primary" onclick="assignMentor(1)">Assegna Mentore</button>
+        </div>
+    </div>
+
+    <div class="request-card assigned">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5>Richiesta chiarimenti requisiti</h5>
+                <p class="text-muted mb-2">Team: HealthTech • Inviato: 1 giorno fa</p>
+                <p>Abbiamo dubbi sui requisiti non funzionali del progetto...</p>
+            </div>
+            <span class="badge bg-info">Assegnato</span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-person-check me-1 text-success"></i>
+                <span>Mentore: Sarah Cloud</span>
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-primary me-2" onclick="scheduleCall(1)">
+                    <i class="bi bi-calendar me-1"></i>Programma Call
+                </button>
+                <button class="btn btn-sm btn-success" onclick="resolveRequest(1)">
+                    <i class="bi bi-check-circle me-1"></i>Risolvi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="request-card resolved">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h5>Problema di configurazione</h5>
+                <p class="text-muted mb-2">Team: GreenDev • Inviato: 3 giorni fa</p>
+                <p>Problema con la configurazione dell'ambiente di sviluppo...</p>
+            </div>
+            <span class="badge bg-success">Risolto</span>
+        </div>
+        <hr>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <i class="bi bi-check-circle-fill text-success me-1"></i>
+                <span>Risolto da Paolo Database - 2 giorni fa</span>
+            </div>
+            <small class="text-muted">Call effettuata il 15/02/2024</small>
+        </div>
+    </div>
+
+    <!-- Modal per programmare call -->
+    <div class="modal fade" id="scheduleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Programma Call</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="scheduleForm">
+                        <div class="mb-3">
+                            <label class="form-label">Data e Ora</label>
+                            <input type="datetime-local" class="form-control" id="callDateTime" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Durata (minuti)</label>
+                            <select class="form-select" id="callDuration">
+                                <option value="30">30 minuti</option>
+                                <option value="60">1 ora</option>
+                                <option value="90">1 ora e 30</option>
+                                <option value="120">2 ore</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Piattaforma</label>
+                            <select class="form-select" id="callPlatform">
+                                <option value="google">Google Meet</option>
+                                <option value="zoom">Zoom</option>
+                                <option value="teams">Microsoft Teams</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmSchedule()">Programma</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showNewRequestForm() {
+        document.getElementById('newRequestForm').style.display = 'block';
+    }
+
+    function hideNewRequestForm() {
+        document.getElementById('newRequestForm').style.display = 'none';
+    }
+
+    function createSupportRequest(event) {
+        event.preventDefault();
+        alert('Richiesta di supporto creata!');
+        hideNewRequestForm();
+    }
+
+    function assignMentor(requestId) {
+        alert('Funzionalità di assegnazione mentore per richiesta ' + requestId);
+    }
+
+    function scheduleCall(requestId) {
+        var modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+        modal.show();
+    }
+
+    function confirmSchedule() {
+        const dateTime = document.getElementById('callDateTime').value;
+        const duration = document.getElementById('callDuration').value;
+        const platform = document.getElementById('callPlatform').value;
+
+        alert('Call programmata per il ' + dateTime + ' della durata di ' + duration + ' minuti su ' + platform);
+        bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+    }
+
+    function resolveRequest(requestId) {
+        if(confirm('Segnare questa richiesta come risolta?')) {
+            alert('Richiesta ' + requestId + ' risolta!');
+        }
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

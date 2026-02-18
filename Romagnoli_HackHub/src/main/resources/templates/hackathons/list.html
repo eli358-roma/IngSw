@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Lista Hackathon</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .card-hackathon {
+            border-left: 5px solid var(--primary-color);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card-hackathon:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .btn-hackhub {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        .btn-hackhub:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">
+            <i class="bi bi-code-slash me-2"></i>
+            <strong>HackHub</strong>
+        </a>
+        <div class="navbar-nav ms-auto">
+            <a href="/dashboard" class="nav-link">
+                <i class="bi bi-speedometer2 me-1"></i>Dashboard
+            </a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="bi bi-trophy me-2 text-primary"></i>Lista Hackathon</h1>
+            <p class="text-muted">Gestisci tutti gli hackathon della piattaforma</p>
+        </div>
+        <div>
+            <a href="/hackathons/create" class="btn btn-hackhub">
+                <i class="bi bi-plus-circle me-1"></i>Nuovo Hackathon
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtri -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Tutti gli stati</option>
+                        <option value="INSCRIZIONE">In Iscrizione</option>
+                        <option value="IN_CORSO">In Corso</option>
+                        <option value="IN_VALUTAZIONE">In Valutazione</option>
+                        <option value="CONCLUSO">Concluso</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cerca hackathon...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista Hackathon -->
+    <div th:if="${hackathons != null and !hackathons.isEmpty()}">
+        <div class="row">
+            <div class="col-md-6 col-lg-4 mb-4" th:each="hackathon : ${hackathons}">
+                <div class="card h-100 card-hackathon">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title" th:text="${hackathon.name}">Nome Hackathon</h5>
+                            <span th:switch="${hackathon.status}" class="status-badge">
+                                    <span th:case="'INSCRIZIONE'" class="badge bg-primary">In Iscrizione</span>
+                                    <span th:case="'IN_CORSO'" class="badge bg-success">In Corso</span>
+                                    <span th:case="'IN_VALUTAZIONE'" class="badge bg-warning">In Valutazione</span>
+                                    <span th:case="'CONCLUSO'" class="badge bg-secondary">Concluso</span>
+                                </span>
+                        </div>
+                        <p class="card-text text-muted" th:text="${hackathon.description}">Descrizione...</p>
+
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <small><i class="bi bi-people me-1"></i>Team:</small>
+                                <span class="badge bg-info" th:text="${#lists.size(hackathon.teams)}">0</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <small><i class="bi bi-calendar me-1"></i>Iscrizioni fino:</small>
+                                <small th:text="${#temporals.format(hackathon.registrationDeadline, 'dd/MM/yyyy')}">01/01/2024</small>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small><i class="bi bi-person-badge me-1"></i>Organizzatore:</small>
+                                <small th:text="${hackathon.organizer != null ? hackathon.organizer.username : 'N/D'}">Admin</small>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 d-flex gap-2">
+                            <a th:href="@{/hackathons/{id}(id=${hackathon.id})}" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                <i class="bi bi-eye me-1"></i>Dettagli
+                            </a>
+                            <a th:href="@{/hackathons/{id}/manage(id=${hackathon.id})}" class="btn btn-sm btn-outline-success flex-grow-1">
+                                <i class="bi bi-gear me-1"></i>Gestisci
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nessun hackathon -->
+    <div th:if="${hackathons == null or hackathons.isEmpty()}" class="text-center py-5">
+        <i class="bi bi-calendar-x display-1 text-muted"></i>
+        <h3 class="mt-3 text-muted">Nessun hackathon disponibile</h3>
+        <p class="text-muted">Inizia creando il tuo primo hackathon!</p>
+        <a href="/hackathons/create" class="btn btn-hackhub mt-3">
+            <i class="bi bi-plus-circle me-2"></i>Crea Nuovo Hackathon
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

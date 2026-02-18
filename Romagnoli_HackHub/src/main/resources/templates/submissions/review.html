@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Valuta Sottomissioni</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .review-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .rating-input {
+            font-size: 1.5rem;
+            color: #ffc107;
+        }
+        .rating-input i {
+            cursor: pointer;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-code-slash me-2"></i><strong>HackHub</strong></a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="bi bi-check-circle me-2 text-primary"></i>Valuta Sottomissioni</h1>
+        <select class="form-select w-auto">
+            <option>AI Challenge (In Valutazione)</option>
+            <option>Green Tech Hackathon</option>
+        </select>
+    </div>
+
+    <!-- Lista Sottomissioni da Valutare -->
+    <div class="review-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h4>Smart Home Assistant</h4>
+                <p class="text-muted">Team: Code Masters • Inviato: 15/02/2024</p>
+            </div>
+            <span class="badge bg-warning">Da Valutare</span>
+        </div>
+
+        <div class="mb-3">
+            <h6>Descrizione Progetto</h6>
+            <p>Un assistente domestico basato su IA che impara le abitudini degli utenti e automatizza le routine domestiche. Utilizza machine learning per predire le preferenze e ottimizzare i consumi energetici.</p>
+        </div>
+
+        <div class="mb-3">
+            <h6>Repository</h6>
+            <a href="#">https://github.com/codemasters/smart-home-assistant</a>
+        </div>
+
+        <hr>
+
+        <form onsubmit="submitEvaluation(event, 1)">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Punteggio (0-10)</label>
+                    <input type="number" class="form-control" id="score1" min="0" max="10" step="0.1" required>
+                </div>
+                <div class="col-md-12 mt-3">
+                    <label class="form-label">Feedback</label>
+                    <textarea class="form-control" id="feedback1" rows="3" placeholder="Inserisci il tuo feedback..." required></textarea>
+                </div>
+                <div class="col-12 mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Invia Valutazione
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="review-card">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <h4>Health Monitor Pro</h4>
+                <p class="text-muted">Team: HealthTech • Inviato: 14/02/2024</p>
+            </div>
+            <span class="badge bg-warning">Da Valutare</span>
+        </div>
+
+        <div class="mb-3">
+            <h6>Descrizione Progetto</h6>
+            <p>Sistema di monitoraggio salute con predizione di anomalie basato su reti neurali. Analizza dati biometrici in tempo reale e invia alert in caso di pattern anomali.</p>
+        </div>
+
+        <div class="mb-3">
+            <h6>Repository</h6>
+            <a href="#">https://github.com/healthtech/health-monitor</a>
+        </div>
+
+        <hr>
+
+        <form onsubmit="submitEvaluation(event, 2)">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label">Punteggio (0-10)</label>
+                    <input type="number" class="form-control" id="score2" min="0" max="10" step="0.1" required>
+                </div>
+                <div class="col-md-12 mt-3">
+                    <label class="form-label">Feedback</label>
+                    <textarea class="form-control" id="feedback2" rows="3" placeholder="Inserisci il tuo feedback..." required></textarea>
+                </div>
+                <div class="col-12 mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Invia Valutazione
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function submitEvaluation(event, submissionId) {
+        event.preventDefault();
+        const score = document.getElementById('score' + submissionId).value;
+        const feedback = document.getElementById('feedback' + submissionId).value;
+
+        alert('Valutazione inviata per sottomissione ' + submissionId +
+              '\nPunteggio: ' + score + '\nFeedback: ' + feedback);
+        // Qui chiameremo l'API
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Sottomissioni</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .submission-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            border-left: 5px solid var(--primary-color);
+        }
+        .submission-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .submission-card.evaluated {
+            border-left-color: var(--success-color);
+        }
+        .score-badge {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--warning-color);
+        }
+        .btn-hackhub {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+        }
+        .filter-section {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">
+            <i class="bi bi-code-slash me-2"></i><strong>HackHub</strong>
+        </a>
+        <div class="navbar-nav ms-auto">
+            <a href="/dashboard" class="nav-link"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="bi bi-upload me-2 text-primary"></i>Sottomissioni</h1>
+            <p class="text-muted">Visualizza e gestisci tutte le sottomissioni dei team</p>
+        </div>
+    </div>
+
+    <!-- Filtri -->
+    <div class="filter-section">
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">Hackathon</label>
+                <select class="form-select" id="hackathonFilter">
+                    <option value="">Tutti gli hackathon</option>
+                    <option th:each="h : ${hackathons}"
+                            th:value="${h.id}"
+                            th:text="${h.name}"></option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Stato</label>
+                <select class="form-select" id="statusFilter">
+                    <option value="">Tutte</option>
+                    <option value="submitted">Inviate</option>
+                    <option value="evaluated">Valutate</option>
+                    <option value="pending">In attesa</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button class="btn btn-primary w-100" onclick="applyFilters()">
+                    <i class="bi bi-funnel me-2"></i>Applica Filtri
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista Sottomissioni (simulata per ora) -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="submission-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5>Smart Home Assistant</h5>
+                    <span class="badge bg-success">Valutato</span>
+                </div>
+                <p class="text-muted mb-2">Team: Code Masters • Hackathon: AI Challenge</p>
+                <p class="small">Un assistente domestico basato su IA che impara le abitudini degli utenti...</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="score-badge">9.2/10</span>
+                        <small class="text-muted ms-2">by Giudice Mario</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewSubmission(1)">Dettagli</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="submission-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5>EcoTrack</h5>
+                    <span class="badge bg-warning">In attesa</span>
+                </div>
+                <p class="text-muted mb-2">Team: GreenDev • Hackathon: Green Tech</p>
+                <p class="small">App per il monitoraggio dell'impronta carbonica personale...</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted">In attesa di valutazione</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewSubmission(2)">Dettagli</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="submission-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5>Health Monitor Pro</h5>
+                    <span class="badge bg-success">Valutato</span>
+                </div>
+                <p class="text-muted mb-2">Team: HealthTech • Hackathon: AI Challenge</p>
+                <p class="small">Sistema di monitoraggio salute con predizione di anomalie...</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="score-badge">8.7/10</span>
+                        <small class="text-muted ms-2">by Giudice Luigi</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewSubmission(3)">Dettagli</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="submission-card">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5>RecycleAI</h5>
+                    <span class="badge bg-warning">In attesa</span>
+                </div>
+                <p class="text-muted mb-2">Team: EcoWarriors • Hackathon: Green Tech</p>
+                <p class="small">Sistema di riconoscimento rifiuti per riciclaggio intelligente...</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="text-muted">In attesa di valutazione</span>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="viewSubmission(4)">Dettagli</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiche Sottomissioni -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">24</h3>
+                    <p class="text-muted mb-0">Totale Sottomissioni</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">16</h3>
+                    <p class="text-muted mb-0">Valutate</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">8</h3>
+                    <p class="text-muted mb-0">In attesa</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">8.4</h3>
+                    <p class="text-muted mb-0">Media Punteggi</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function applyFilters() {
+        const hackathon = document.getElementById('hackathonFilter').value;
+        const status = document.getElementById('statusFilter').value;
+        alert('Filtri applicati: Hackathon=' + hackathon + ', Stato=' + status);
+        // Qui implementeremo la logica di filtro reale
+    }
+
+    function viewSubmission(id) {
+        alert('Visualizzazione sottomissione ' + id + ' - Funzionalità in sviluppo');
+        // window.location.href = '/submissions/' + id;
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

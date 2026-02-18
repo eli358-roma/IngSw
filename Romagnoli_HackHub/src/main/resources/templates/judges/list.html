@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Giudici</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-color: #4361ee; --secondary-color: #3a0ca3; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .judge-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+            text-align: center;
+        }
+        .judge-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .judge-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            margin: 0 auto 15px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-code-slash me-2"></i><strong>HackHub</strong></a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h1 class="mb-4"><i class="bi bi-award me-2 text-primary"></i>Giudici</h1>
+
+    <div class="row">
+        <div class="col-md-4" th:each="judge : ${judges}">
+            <div class="judge-card">
+                <div class="judge-avatar">
+                    <span th:text="${#strings.substring(judge.username, 0, 1)}">M</span>
+                </div>
+                <h5 th:text="${judge.username}">Mario Rossi</h5>
+                <p class="text-muted" th:text="${judge.email}">mario@example.com</p>
+                <div class="mt-3">
+                    <span class="badge bg-primary">Giudice</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-around">
+                    <div>
+                        <small class="text-muted">Hackathon Assegnati</small>
+                        <h6>3</h6>
+                    </div>
+                    <div>
+                        <small class="text-muted">Valutazioni</small>
+                        <h6>12</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards statiche per esempio quando non ci sono dati -->
+        <div class="col-md-4" th:if="${judges == null or judges.isEmpty()}">
+            <div class="judge-card">
+                <div class="judge-avatar">L</div>
+                <h5>Luigi Verdi</h5>
+                <p class="text-muted">luigi@example.com</p>
+                <span class="badge bg-primary">Giudice</span>
+                <hr>
+                <div class="d-flex justify-content-around">
+                    <div><small>Assegnati</small><h6>2</h6></div>
+                    <div><small>Valutazioni</small><h6>8</h6></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" th:if="${judges == null or judges.isEmpty()}">
+            <div class="judge-card">
+                <div class="judge-avatar">A</div>
+                <h5>Anna Bianchi</h5>
+                <p class="text-muted">anna@example.com</p>
+                <span class="badge bg-primary">Giudice</span>
+                <hr>
+                <div class="d-flex justify-content-around">
+                    <div><small>Assegnati</small><h6>4</h6></div>
+                    <div><small>Valutazioni</small><h6>15</h6></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

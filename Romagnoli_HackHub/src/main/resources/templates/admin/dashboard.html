@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --danger-color: #dc3545;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .admin-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .user-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .user-row:hover {
+            background: #f8f9fa;
+        }
+        .role-badge {
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-code-slash me-2"></i><strong>HackHub Admin</strong></a>
+        <div class="navbar-nav ms-auto">
+            <a href="/dashboard" class="nav-link"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h1 class="mb-4"><i class="bi bi-shield-lock me-2 text-primary"></i>Pannello Amministrazione</h1>
+
+    <!-- Statistiche Admin -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="admin-card text-center">
+                <h3 class="text-primary" th:text="${#lists.size(users)}">24</h3>
+                <p class="text-muted">Utenti Totali</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="admin-card text-center">
+                <h3 class="text-success" th:text="${#lists.size(hackathons)}">12</h3>
+                <p class="text-muted">Hackathon</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="admin-card text-center">
+                <h3 class="text-info">48</h3>
+                <p class="text-muted">Team</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="admin-card text-center">
+                <h3 class="text-warning">8</h3>
+                <p class="text-muted">Mentori</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gestione Utenti -->
+    <div class="admin-card">
+        <h5 class="mb-3"><i class="bi bi-people me-2"></i>Gestione Utenti</h5>
+        <div class="mb-3">
+            <button class="btn btn-sm btn-primary" onclick="showAddUserForm()">
+                <i class="bi bi-plus-circle me-1"></i>Nuovo Utente
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Ruolo</th>
+                    <th>Team</th>
+                    <th>Azioni</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="user : ${users}">
+                    <td th:text="${user.id}">1</td>
+                    <td th:text="${user.username}">Mario</td>
+                    <td th:text="${user.email}">mario@test.com</td>
+                    <td>
+                        <select class="form-select form-select-sm"
+                                th:value="${user.role}"
+                                onchange="changeRole(this, ${user.id})">
+                            <option value="USER">Partecipante</option>
+                            <option value="ORGANIZER">Organizzatore</option>
+                            <option value="JUDGE">Giudice</option>
+                            <option value="MENTOR">Mentore</option>
+                        </select>
+                    </td>
+                    <td th:text="${user.team != null ? user.team.name : 'Nessun team'}">Team1</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Gestione Hackathon -->
+    <div class="admin-card">
+        <h5 class="mb-3"><i class="bi bi-trophy me-2"></i>Gestione Hackathon</h5>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>Stato</th>
+                    <th>Organizzatore</th>
+                    <th>Team</th>
+                    <th>Premio</th>
+                    <th>Azioni</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="h : ${hackathons}">
+                    <td th:text="${h.id}">1</td>
+                    <td th:text="${h.name}">AI Challenge</td>
+                    <td>
+                        <span th:text="${h.status}" class="badge bg-primary"></span>
+                    </td>
+                    <td th:text="${h.organizer != null ? h.organizer.username : 'N/D'}">Admin</td>
+                    <td th:text="${#lists.size(h.teams)}">5</td>
+                    <td th:text="${h.prizeMoney != null ? h.prizeMoney + '€' : '-'}">5000€</td>
+                    <td>
+                        <button class="btn btn-sm btn-danger" onclick="deleteHackathon(${h.id})">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Configurazioni Sistema -->
+    <div class="admin-card">
+        <h5 class="mb-3"><i class="bi bi-gear me-2"></i>Configurazioni Sistema</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Servizi Esterni</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="calendarService" checked>
+                        <label class="form-check-label">Calendar Service</label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="paymentService" checked>
+                        <label class="form-check-label">Payment Service</label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label">Logging Level</label>
+                    <select class="form-select">
+                        <option>DEBUG</option>
+                        <option selected>INFO</option>
+                        <option>WARN</option>
+                        <option>ERROR</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <button class="btn btn-primary">Salva Configurazioni</button>
+    </div>
+</div>
+
+<!-- Modal Nuovo Utente -->
+<div class="modal fade" id="addUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Nuovo Utente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="mb-3">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" id="newUsername" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control" id="newEmail" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ruolo</label>
+                        <select class="form-select" id="newRole">
+                            <option value="USER">Partecipante</option>
+                            <option value="ORGANIZER">Organizzatore</option>
+                            <option value="JUDGE">Giudice</option>
+                            <option value="MENTOR">Mentore</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary" onclick="createUser()">Crea Utente</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showAddUserForm() {
+        var modal = new bootstrap.Modal(document.getElementById('addUserModal'));
+        modal.show();
+    }
+
+    function createUser() {
+        const user = {
+            username: document.getElementById('newUsername').value,
+            email: document.getElementById('newEmail').value,
+            password: document.getElementById('newPassword').value,
+            role: document.getElementById('newRole').value
+        };
+
+        fetch('/api/users/register', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(user)
+        })
+        .then(response => {
+            if(response.ok) {
+                alert('Utente creato con successo!');
+                location.reload();
+            }
+        })
+        .catch(error => alert('Errore: ' + error));
+    }
+
+    function changeRole(select, userId) {
+        const newRole = select.value;
+        fetch('/api/users/' + userId + '/role', {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({role: newRole})
+        })
+        .then(response => {
+            if(response.ok) {
+                alert('Ruolo aggiornato!');
+            }
+        });
+    }
+
+    function deleteUser(userId) {
+        if(confirm('Sei sicuro di voler eliminare questo utente?')) {
+            alert('Funzionalità di eliminazione in sviluppo');
+        }
+    }
+
+    function deleteHackathon(hackathonId) {
+        if(confirm('Sei sicuro di voler eliminare questo hackathon?')) {
+            alert('Funzionalità di eliminazione in sviluppo');
+        }
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

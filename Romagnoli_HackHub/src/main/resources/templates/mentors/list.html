@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Mentori</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-color: #4361ee; --secondary-color: #3a0ca3; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .mentor-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        .mentor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .mentor-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+        .expertise-tag {
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 5px;
+            margin-bottom: 5px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-code-slash me-2"></i><strong>HackHub</strong></a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h1 class="mb-4"><i class="bi bi-chat-dots me-2 text-primary"></i>Mentori</h1>
+
+    <div class="row">
+        <div class="col-md-6 mb-4" th:each="mentor : ${mentors}">
+            <div class="mentor-card">
+                <div class="d-flex">
+                    <div class="mentor-avatar me-3">
+                        <span th:text="${#strings.substring(mentor.username, 0, 1)}">M</span>
+                    </div>
+                    <div>
+                        <h5 th:text="${mentor.username}">Marco Tech</h5>
+                        <p class="text-muted" th:text="${mentor.email}">marco@example.com</p>
+                        <div>
+                            <span class="expertise-tag">Java</span>
+                            <span class="expertise-tag">Spring</span>
+                            <span class="expertise-tag">AI</span>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col">
+                        <small class="text-muted">Team seguiti</small>
+                        <h6>3</h6>
+                    </div>
+                    <div class="col">
+                        <small class="text-muted">Call effettuate</small>
+                        <h6>8</h6>
+                    </div>
+                    <div class="col">
+                        <small class="text-muted">Richieste</small>
+                        <h6>2</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cards statiche per esempio -->
+        <div class="col-md-6 mb-4" th:if="${mentors == null or mentors.isEmpty()}">
+            <div class="mentor-card">
+                <div class="d-flex">
+                    <div class="mentor-avatar me-3">S</div>
+                    <div>
+                        <h5>Sarah Cloud</h5>
+                        <p class="text-muted">sarah@example.com</p>
+                        <div>
+                            <span class="expertise-tag">Cloud</span>
+                            <span class="expertise-tag">AWS</span>
+                            <span class="expertise-tag">DevOps</span>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col"><h6>4</h6><small>Team</small></div>
+                    <div class="col"><h6>12</h6><small>Call</small></div>
+                    <div class="col"><h6>1</h6><small>Richieste</small></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4" th:if="${mentors == null or mentors.isEmpty()}">
+            <div class="mentor-card">
+                <div class="d-flex">
+                    <div class="mentor-avatar me-3">P</div>
+                    <div>
+                        <h5>Paolo Database</h5>
+                        <p class="text-muted">paolo@example.com</p>
+                        <div>
+                            <span class="expertise-tag">SQL</span>
+                            <span class="expertise-tag">NoSQL</span>
+                            <span class="expertise-tag">Big Data</span>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row text-center">
+                    <div class="col"><h6>5</h6><small>Team</small></div>
+                    <div class="col"><h6>15</h6><small>Call</small></div>
+                    <div class="col"><h6>3</h6><small>Richieste</small></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

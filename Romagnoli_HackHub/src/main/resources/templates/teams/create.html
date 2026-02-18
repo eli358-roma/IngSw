@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Crea Team</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root { --primary-color: #4361ee; --secondary-color: #3a0ca3; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard"><i class="bi bi-code-slash me-2"></i><strong>HackHub</strong></a>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/teams">Team</a></li>
+            <li class="breadcrumb-item active">Crea Team</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="form-card">
+                <h2 class="mb-4"><i class="bi bi-people me-2 text-primary"></i>Crea Nuovo Team</h2>
+
+                <form id="createTeamForm" onsubmit="createTeam(event)">
+                    <div class="mb-3">
+                        <label class="form-label">Nome Team</label>
+                        <input type="text" class="form-control" id="teamName" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Hackathon</label>
+                        <select class="form-select" id="hackathonId" required>
+                            <option value="">Seleziona hackathon...</option>
+                            <option th:each="hackathon : ${hackathons}"
+                                    th:value="${hackathon.id}"
+                                    th:text="${hackathon.name}"></option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Creatore (ID Utente)</label>
+                        <select class="form-select" id="creatorId" required>
+                            <option value="">Seleziona utente...</option>
+                            <option th:each="user : ${users}"
+                                    th:value="${user.id}"
+                                    th:text="${user.username}"></option>
+                        </select>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-check-circle me-2"></i>Crea Team
+                        </button>
+                        <a href="/teams" class="btn btn-secondary">
+                            <i class="bi bi-x-circle me-2"></i>Annulla
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function createTeam(event) {
+        event.preventDefault();
+
+        const data = {
+            teamName: document.getElementById('teamName').value,
+            hackathonId: document.getElementById('hackathonId').value,
+            creatorId: document.getElementById('creatorId').value
+        };
+
+        fetch('/api/teams', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Errore nella creazione');
+        })
+        .then(data => {
+            alert('Team creato con successo! ID: ' + data.id);
+            window.location.href = '/teams';
+        })
+        .catch(error => alert('Errore: ' + error));
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
