@@ -20,7 +20,7 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        System.out.println("🚀 Inizializzazione dati di test...");
+        System.out.println("Inizializzazione dati di test...");
 
         // Crea utenti di test
         User organizer = new User("organizer@hackhub.com", "Mario Organizer", "password", "ORGANIZER");
@@ -44,7 +44,7 @@ public class DataInitializer implements CommandLineRunner {
                 LocalDateTime.now().plusDays(3),
                 LocalDateTime.now().plusDays(5),
                 4,
-                organizer
+                organizer, 5000.0 //premio di 5000€
         );
 
         hackathon1.setJudge(judge);
@@ -58,13 +58,15 @@ public class DataInitializer implements CommandLineRunner {
                 LocalDateTime.now().plusDays(12),
                 LocalDateTime.now().plusDays(14),
                 3,
-                organizer
+                organizer,
+                3000.0 //premio di 3000€
         );
 
         hackathonRepository.save(hackathon2);
 
-        System.out.println("✅ Dati di test creati con successo!");
-        System.out.println("👤 Utenti creati: " + userRepository.count());
-        System.out.println("🏆 Hackathon creati: " + hackathonRepository.count());
+        System.out.println("Dati di test creati con successo!");
+        System.out.println("Utenti creati: " + userRepository.count());
+        System.out.println("Hackathon creati: " + hackathonRepository.count());
+        System.out.println("Hackathon con premi: AI Challenge (5000€), Green Tech (3000€)");
     }
 }
