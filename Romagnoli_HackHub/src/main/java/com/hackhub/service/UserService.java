@@ -13,7 +13,6 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    // Design Pattern: Factory Method
     public User createUser(String email, String username, String password, String role) {
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("Email già registrata");
@@ -61,5 +60,9 @@ public class UserService {
 
         user.setRole(newRole);
         return userRepository.save(user);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 }
