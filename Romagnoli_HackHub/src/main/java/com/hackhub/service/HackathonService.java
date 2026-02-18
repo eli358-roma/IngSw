@@ -6,11 +6,13 @@ import com.hackhub.model.Team;
 import com.hackhub.repository.HackathonRepository;
 import com.hackhub.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
 import com.hackhub.pattern.observer.HackathonObservable;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class HackathonService {
@@ -24,7 +26,6 @@ public class HackathonService {
     @Autowired
     private HackathonObservable hackathonObservable;
 
-    // Design Pattern: Builder (semplificato)
     public Hackathon createHackathon(String name, String description, String rules,
                                      LocalDateTime regDeadline, LocalDateTime startDate,
                                      LocalDateTime endDate, Integer maxTeamSize, Long organizerId) {
@@ -40,6 +41,73 @@ public class HackathonService {
                 startDate, endDate, maxTeamSize, organizer);
 
         return hackathonRepository.save(hackathon);
+    }
+
+    public Hackathon createHackathonWithBuilder(String name, String description, String rules, LocalDateTime regDeadline, LocalDateTime startDate, LocalDateTime endDate, Integer maxTeamSize, Long organizerId, Long judgeId, List<Long> mentorIds) {
+        // Validazioni
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Il nome dell'hackathon è obbligatorio");
+        }
+
+        if (regDeadline.isAfter(startDate)) {
+            throw new IllegalArgumentException("La scadenza iscrizioni deve essere prima dell'inizio");
+        }
+
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("La data di inizio deve essere prima della fine");
+        }
+
+        if (maxTeamSize < 1 || maxTeamSize > 10) {
+            throw new IllegalArgumentException("La dimensione del team deve essere tra 1 e 10");
+        }
+
+        // Recupera organizzatore
+        User organizer = userRepository.findById(organizerId)
+                .orElseThrow(() -> new RuntimeException("Organizzatore non trovato"));
+
+        if (!"ORGANIZER".equals(organizer.getRole())) {
+            throw new RuntimeException("L'utente non è un organizzatore");
+        }
+
+        // Crea hackathon base
+        Hackathon hackathon = new Hackathon(name, description, rules, regDeadline,
+                startDate, endDate, maxTeamSize, organizer);
+
+        // Assegna giudice se presente
+        if (judgeId != null) {
+            User judge = userRepository.findById(judgeId)
+                    .orElseThrow(() -> new RuntimeException("Giudice non trovato"));
+
+            if (!"JUDGE".equals(judge.getRole())) {
+                throw new RuntimeException("L'utente non è un giudice");
+            }
+            hackathon.setJudge(judge);
+        }
+
+        // Assegna mentori se presenti
+        if (mentorIds != null && !mentorIds.isEmpty()) {
+            for (Long mentorId : mentorIds) {
+                User mentor = userRepository.findById(mentorId)
+                        .orElseThrow(() -> new RuntimeException("Mentor non trovato"));
+
+                if (!"MENTOR".equals(mentor.getRole())) {
+                    throw new RuntimeException("L'utente " + mentor.getUsername() + " non è un mentor");
+                }
+
+                if (!hackathon.getMentors().contains(mentor)) {
+                    hackathon.getMentors().add(mentor);
+                }
+            }
+        }
+
+        // Salva e notifica
+        Hackathon saved = hackathonRepository.save(hackathon);
+
+        // Notifica gli observer
+        hackathonObservable.notifyJudgeAssigned(saved);
+
+        System.out.println("Hackathon '" + name + "' creato con builder pattern");
+        return saved;
     }
 
     public Hackathon assignJudge(Long hackathonId, Long judgeId) {
@@ -177,5 +245,147 @@ public class HackathonService {
         Hackathon hackathon = hackathonRepository.findById(hackathonId)
                 .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
         return hackathon.getMentors();
+    }
+
+    //Aggiorna automaticamente lo stato in base alle date
+    @Scheduled(fixedRate = 3600000) // Ogni ora
+    @Transactional
+    public void updateHackathonStatuses() {
+        List<Hackathon> hackathons = hackathonRepository.findAll();
+        LocalDateTime now = LocalDateTime.now();
+
+        for (Hackathon hackathon : hackathons) {
+            String oldStatus = hackathon.getStatus();
+            String newStatus = null;
+
+            switch (hackathon.getStatus()) {
+                case "INSCRIZIONE":
+                    if (now.isAfter(hackathon.getRegistrationDeadline())) {
+                        newStatus = "IN_CORSO";
+                    }
+                    break;
+
+                case "IN_CORSO":
+                    if (now.isAfter(hackathon.getEndDate())) {
+                        newStatus = "IN_VALUTAZIONE";
+                    }
+                    break;
+
+                case "IN_VALUTAZIONE":
+                    // Controlla se tutte le sottomissioni sono state valutate
+                    boolean allEvaluated = true;
+                    for (Team team : hackathon.getTeams()) {
+                        if (team.hasSubmittedProject() && !team.isEvaluated()) {
+                            allEvaluated = false;
+                            break;
+                        }
+                    }
+
+                    if (allEvaluated && !hackathon.getTeams().isEmpty()) {
+                        newStatus = "CONCLUSO";
+                        determineWinner(hackathon);
+                    }
+                    break;
+            }
+
+            if (newStatus != null && !newStatus.equals(oldStatus)) {
+                hackathon.setStatus(newStatus);
+                hackathonRepository.save(hackathon);
+                hackathonObservable.notifyStatusChange(hackathon, oldStatus, newStatus);
+                System.out.println("Hackathon '" + hackathon.getName() + "' passato a: " + newStatus);
+            }
+        }
+    }
+
+    /**
+     * Ottiene statistiche complete per un hackathon
+     */
+    public Map<String, Object> getHackathonStatistics(Long hackathonId) {
+        Hackathon hackathon = hackathonRepository.findById(hackathonId)
+                .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
+
+        Map<String, Object> stats = new HashMap<>();
+
+        // Statistiche base
+        stats.put("name", hackathon.getName());
+        stats.put("status", hackathon.getStatus());
+        stats.put("totalTeams", hackathon.getTeams().size());
+
+        // Statistiche team
+        int teamsWithSubmission = 0;
+        int teamsEvaluated = 0;
+        double totalScore = 0;
+        List<Double> scores = new ArrayList<>();
+
+        for (Team team : hackathon.getTeams()) {
+            if (team.hasSubmittedProject()) {
+                teamsWithSubmission++;
+            }
+            if (team.isEvaluated()) {
+                teamsEvaluated++;
+                totalScore += team.getScore();
+                scores.add(team.getScore());
+            }
+        }
+
+        stats.put("teamsWithSubmission", teamsWithSubmission);
+        stats.put("teamsEvaluated", teamsEvaluated);
+        stats.put("avgScore", teamsEvaluated > 0 ? totalScore / teamsEvaluated : 0);
+        stats.put("maxScore", scores.stream().max(Double::compare).orElse(0.0));
+        stats.put("minScore", scores.stream().min(Double::compare).orElse(0.0));
+
+        // Statistiche mentori
+        stats.put("totalMentors", hackathon.getMentors().size());
+
+        // Vincitore
+        if (hackathon.getWinnerTeamId() != null) {
+            Optional<Team> winner = hackathon.getTeams().stream()
+                    .filter(t -> t.getId().equals(hackathon.getWinnerTeamId()))
+                    .findFirst();
+
+            winner.ifPresent(team -> {
+                stats.put("winner", team.getName());
+                stats.put("winnerScore", team.getScore());
+            });
+        }
+
+        return stats;
+    }
+
+    //Verifica se un utente può accedere a un hackathon
+    public boolean canAccessHackathon(Long hackathonId, Long userId, String userRole) {
+        Hackathon hackathon = hackathonRepository.findById(hackathonId)
+                .orElseThrow(() -> new RuntimeException("Hackathon non trovato"));
+
+        // Organizzatore può sempre accedere
+        if (hackathon.getOrganizer().getId().equals(userId)) {
+            return true;
+        }
+
+        // Giudice può accedere se assegnato
+        if ("JUDGE".equals(userRole) && hackathon.getJudge() != null
+                && hackathon.getJudge().getId().equals(userId)) {
+            return true;
+        }
+
+        // Mentore può accedere se nella lista
+        if ("MENTOR".equals(userRole)) {
+            return hackathon.getMentors().stream()
+                    .anyMatch(m -> m.getId().equals(userId));
+        }
+
+        // Utente normale può accedere se partecipa
+        if ("USER".equals(userRole)) {
+            return hackathon.getTeams().stream()
+                    .flatMap(t -> t.getMembers().stream())
+                    .anyMatch(u -> u.getId().equals(userId));
+        }
+
+        return false;
+    }
+
+    public Hackathon getHackathonById(Long id) {
+        return hackathonRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Hackathon non trovato con ID: " + id));
     }
 }
