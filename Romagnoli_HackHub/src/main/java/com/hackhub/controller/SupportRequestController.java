@@ -2,6 +2,7 @@ package com.hackhub.controller;
 
 import com.hackhub.model.SupportRequest;
 import com.hackhub.service.SupportRequestService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,12 +18,17 @@ public class SupportRequestController {
     private SupportRequestService supportRequestService;
 
     @PostMapping
-    public ResponseEntity<SupportRequest> createRequest(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<SupportRequest> createRequest(@RequestBody Map<String, Object> request, HttpSession session) {
         Long teamId = Long.valueOf(request.get("teamId").toString());
         String title = (String) request.get("title");
         String description = (String) request.get("description");
+        Long userId = (Long) session.getAttribute("userId");
 
-        return ResponseEntity.ok(supportRequestService.createSupportRequest(teamId, title, description));
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok(supportRequestService.createSupportRequest(teamId, title, description, userId));
     }
 
     @PutMapping("/{id}/assign-mentor")
