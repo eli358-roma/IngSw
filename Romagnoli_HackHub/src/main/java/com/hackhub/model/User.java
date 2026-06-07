@@ -25,9 +25,16 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    private String role; // "USER", "ORGANIZER", "JUDGE", "MENTOR"
+    private String role; //può essere user, organizer, judge, mentor
 
-    // ========== RELAZIONI ==========
+    @ElementCollection
+    private List<Long> pendingInvites = new ArrayList<>();
+
+    public List<Long> getPendingInvites() { return pendingInvites; }
+    public void setPendingInvites(List<Long> pendingInvites) { this.pendingInvites = pendingInvites; }
+    public void addPendingInvite(Long teamId) { this.pendingInvites.add(teamId); }
+    public void removePendingInvite(Long teamId) { this.pendingInvites.remove(teamId); }
+
 
     // Un utente può appartenere a un solo team
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,12 +52,10 @@ public class User {
     @JsonIgnore
     private List<Hackathon> judgedHackathons = new ArrayList<>();
 
-    // Un mentore può essere assegnato a hackathon (relazione many-to-many)
+    // Un mentore può essere assegnato a hackathon
     @ManyToMany(mappedBy = "mentors", fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Hackathon> mentoredHackathons = new ArrayList<>();
-
-    // ========== COSTRUTTORI ==========
 
     public User() {}
 
@@ -60,8 +65,6 @@ public class User {
         this.password = password;
         this.role = role;
     }
-
-    // ========== METODI DI UTILITÀ ==========
 
     public boolean joinTeam(Team team) {
         if (team == null) {
@@ -76,10 +79,12 @@ public class User {
         return team.addMember(this);
     }
 
-    //Lascia il team corrente
+    /**
+     * Lascia il team corrente
+     */
     public boolean leaveTeam() {
         if (this.team == null) {
-            return false; // Non è in un team
+            return false;
         }
 
         boolean removed = this.team.removeMember(this);
@@ -89,32 +94,40 @@ public class User {
         return removed;
     }
 
-    //Controlla se l'utente è in un team
+    /**
+     * Controlla se l'utente è in un team
+     */
     public boolean isInTeam() {
         return this.team != null;
     }
 
-    //Controlla se l'utente è il creatore del suo team
+    /**
+     * Controlla se l'utente è il creatore del suo team
+     */
     public boolean isTeamCreator() {
         return this.team != null && this.team.isCreator(this);
     }
 
-    //Controlla se l'utente può creare/gestire hackathon
+    /**
+     * Controlla se l'utente può creare/gestire hackathon
+     */
     public boolean canCreateHackathon() {
         return "ORGANIZER".equals(this.role);
     }
 
-    //Controlla se l'utente può valutare progetti
+    /**
+     * Controlla se l'utente può valutare progetti
+     */
     public boolean canEvaluateProjects() {
         return "JUDGE".equals(this.role);
     }
 
-    //Controlla se l'utente può fare da mentore
+    /**
+     * Controlla se l'utente può fare da mentore
+     */
     public boolean canMentor() {
         return "MENTOR".equals(this.role);
     }
-
-    // ========== GETTER E SETTER ==========
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -144,58 +157,4 @@ public class User {
                 ", team=" + (team != null ? team.getName() : "none") +
                 '}';
     }
-
-    //Valida prima di unirsi a un team
-    public void validateForTeamJoin(Team targetTeam) {
-        if (targetTeam == null) {
-            throw new IllegalArgumentException("Team non valido");
-        }
-
-        if (this.team != null) {
-            throw new IllegalStateException("Utente già membro del team: " + this.team.getName());
-        }
-
-        if (targetTeam.isFull()) {
-            throw new IllegalStateException("Il team è al completo");
-        }
-
-        Hackathon hackathon = targetTeam.getHackathon();
-        if (hackathon == null || !hackathon.isRegistrationOpen()) {
-            throw new IllegalStateException("Le iscrizioni per questo hackathon sono chiuse");
-        }
-    }
-
-    //Ottiene il ruolo in italiano
-    public String getRoleItalian() {
-        return switch (role) {
-            case "ORGANIZER" -> "Organizzatore";
-            case "JUDGE" -> "Giudice";
-            case "MENTOR" -> "Mentore";
-            case "USER" -> "Partecipante";
-            default -> role;
-        };
-    }
-
-    //Verifica se l'utente ha permessi di staff per un hackathon
-    public boolean isStaffForHackathon(Hackathon hackathon) {
-        if (hackathon == null) return false;
-
-        // Organizzatore
-        if (hackathon.getOrganizer() != null && hackathon.getOrganizer().equals(this)) {
-            return true;
-        }
-
-        // Giudice
-        if (hackathon.getJudge() != null && hackathon.getJudge().equals(this)) {
-            return true;
-        }
-
-        // Mentore
-        if (hackathon.getMentors() != null && hackathon.getMentors().contains(this)) {
-            return true;
-        }
-
-        return false;
-    }
-
 }
