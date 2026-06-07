@@ -3,7 +3,7 @@
 HackHub piattaforma web per la gestione degli hackathon, eventi di gruppo ai quali possono partecipare dei team. Viene supportato l'intero ciclo di vita di un hackathon: dalla creazione, alle iscrizioni dei team, fino alla valutazione finale e all'assegnazione del premio. 
 La piattaforma supporta l’organizzazione degli hackathon, la registrazione dei team, ed il caricamento delle sottomissioni. 
 
-#### Attori
+### Attori
 - Visitatore:	Consultazione pubblica degli hackathon
 - Utente:	Registrazione, creazione/join team, invio progetti
 - Organizzatore:	Creazione e gestione hackathon, proclamazione vincitore
@@ -11,7 +11,7 @@ La piattaforma supporta l’organizzazione degli hackathon, la registrazione dei
 - Mentore:	Supporto ai team, prenotazione call, segnalazioni
 - Membro Staff:	Accesso alle sottomissioni degli hackathon assegnati
 
-#### Tecnologie Utilizzate
+### Tecnologie utilizzate
 - Java 17 come linguaggio principale
 - Spring Boot 3.1.5 come framework backend
 - H2 Database: Database in memoria
