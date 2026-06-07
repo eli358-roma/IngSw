@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - La piattaforma per Hackathon</title>
+
+    <!-- Bootstrap e CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
+            --dark-color: #1e1e2f;
+            --light-bg: #f8f9fa;
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Navbar personalizzata */
+        .navbar-custom {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+            padding: 1rem 0;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            color: var(--primary-color);
+        }
+
+        .navbar-brand i {
+            color: var(--warning-color);
+            margin-right: 10px;
+        }
+
+        .nav-link {
+            color: var(--dark-color);
+            font-weight: 500;
+            margin: 0 10px;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .btn-login {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(67, 97, 238, 0.4);
+            color: white;
+        }
+
+        .btn-register {
+            background: transparent;
+            color: var(--dark-color);
+            border: 2px solid var(--primary-color);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-register:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 4rem 3rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 3rem;
+            margin-top: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Card Hackathon */
+        .hackathon-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            height: 100%;
+            border: none;
+            position: relative;
+        }
+
+        .hackathon-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+        }
+
+        .status-badge {
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-badge.inscrizione {
+            background: linear-gradient(45deg, #4361ee, #3a0ca3);
+            color: white;
+        }
+
+        .status-badge.corso {
+            background: linear-gradient(45deg, #4cc9f0, #4361ee);
+            color: white;
+        }
+
+        .status-badge.valutazione {
+            background: linear-gradient(45deg, #f72585, #b5179e);
+            color: white;
+        }
+
+        .status-badge.concluso {
+            background: linear-gradient(45deg, #6c757d, #495057);
+            color: white;
+        }
+
+        .card-image {
+            height: 160px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-image i {
+            font-size: 5rem;
+            color: rgba(255,255,255,0.3);
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .hackathon-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        .hackathon-desc {
+            color: #6c757d;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .hackathon-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .meta-item i {
+            color: var(--primary-color);
+        }
+
+        .prize-badge {
+            background: linear-gradient(45deg, #ffd700, #ffa500);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+
+        .btn-details {
+            background: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .btn-details:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Sezione Features */
+        .features-section {
+            background: white;
+            border-radius: 30px;
+            padding: 4rem 3rem;
+            margin: 3rem 0;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .feature-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 2rem;
+        }
+
+        .feature-title {
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+        }
+
+        .feature-text {
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 3rem 0;
+            margin-top: 4rem;
+            border-radius: 30px 30px 0 0;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+
+        .footer-links a {
+            color: var(--dark-color);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 50px;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .user-info a {
+            color: white;
+            text-decoration: none;
+            margin-left: 10px;
+            padding: 5px 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+
+        .user-info a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Search Bar */
+        .search-box {
+            background: white;
+            border-radius: 50px;
+            padding: 0.5rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 3rem;
+        }
+
+        .search-box input {
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            width: 100%;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .search-box button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .search-box button:hover {
+            background: var(--secondary-color);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2rem;
+            }
+
+            .hero-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Barra di navigazione -->
+<nav class="navbar navbar-expand-lg navbar-custom fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="/public">
+            <i class="bi bi-code-slash"></i>
+            HackHub
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/public">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#hackathons">Hackathon</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#features">Come funziona</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#contact">Contatti</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-2">
+                <!-- Mostra se l'utente non è loggato -->
+                <div th:if="${session.userId == null}">
+                    <a href="/login" class="btn-login me-2">
+                        <i class="bi bi-box-arrow-in-right me-1"></i>Accedi
+                    </a>
+                    <a href="/register" class="btn-register">
+                        <i class="bi bi-person-plus me-1"></i>Registrati
+                    </a>
+                </div>
+
+                <!-- Mostra se l'utente è loggato -->
+                <div th:if="${session.userId != null}" class="user-info">
+                    <i class="bi bi-person-circle me-1"></i>
+                    <span th:text="${session.username}">Utente</span>
+                    <a href="/dashboard" class="ms-2">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                    <a href="/logout">
+                        <i class="bi bi-box-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div style="height: 90px;"></div>
+
+<div class="container">
+    <div class="hero-section">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="hero-title">
+                    Dove le idee <br>diventano realtà
+                </h1>
+                <p class="hero-subtitle">
+                    Partecipa agli hackathon più innovativi, collabora con talenti straordinari
+                    e dai vita alle tue idee. Su HackHub trovi la community perfetta per crescere.
+                </p>
+
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" th:text="${totalHackathons}">50+</span>
+                        <span class="stat-label">Hackathon</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" th:text="${totalUsers}">1000+</span>
+                        <span class="stat-label">Partecipanti</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">€50k+</span>
+                        <span class="stat-label">In premi</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <i class="bi bi-code-slash" style="font-size: 12rem; color: rgba(255,255,255,0.2);"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barra di ricerca -->
+    <div class="search-box">
+        <div class="row g-2">
+            <div class="col-md-9">
+                <input type="text" class="form-control" placeholder="Cerca hackathon per nome, tecnologia, tema...">
+            </div>
+            <div class="col-md-3">
+                <button class="btn w-100">
+                    <i class="bi bi-search me-2"></i>Cerca
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sezioni Hackathon -->
+    <section id="hackathons">
+        <h2 class="text-center mb-5" style="color: white; font-weight: 700; font-size: 2.5rem;">
+            Hackathon disponibili
+        </h2>
+
+        <div class="row g-4" th:if="${hackathons != null and !hackathons.isEmpty()}">
+            <div class="col-lg-4 col-md-6" th:each="h : ${hackathons}">
+                <div class="hackathon-card">
+                    <div class="card-badge">
+                        <span th:switch="${h.status}" class="status-badge">
+                            <span th:case="'INSCRIZIONE'" class="status-badge inscrizione">
+                                <i class="bi bi-pencil-fill me-1"></i>Iscrizioni aperte
+                            </span>
+                            <span th:case="'IN_CORSO'" class="status-badge corso">
+                                <i class="bi bi-play-fill me-1"></i>In corso
+                            </span>
+                            <span th:case="'IN_VALUTAZIONE'" class="status-badge valutazione">
+                                <i class="bi bi-hourglass-split me-1"></i>In valutazione
+                            </span>
+                            <span th:case="'CONCLUSO'" class="status-badge concluso">
+                                <i class="bi bi-check-circle-fill me-1"></i>Concluso
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="card-image">
+                        <i class="bi bi-trophy-fill"></i>
+                    </div>
+
+                    <div class="card-content">
+                        <h3 class="hackathon-title" th:text="${h.name}">Nome Hackathon</h3>
+                        <p class="hackathon-desc" th:text="${h.description}">Descrizione</p>
+
+                        <div class="hackathon-meta">
+                            <span class="meta-item">
+                                <i class="bi bi-calendar-check"></i>
+                                <span th:text="${#temporals.format(h.startDate, 'dd/MM/yyyy')}">Data</span>
+                            </span>
+                            <span class="meta-item">
+                                <i class="bi bi-people-fill"></i>
+                                <span th:text="${h.teams.size()} + ' team'">0 team</span>
+                            </span>
+                            <span class="meta-item">
+                                <i class="bi bi-person-fill"></i>
+                                <span>Max [[${h.maxTeamSize}]]</span>
+                            </span>
+                        </div>
+
+                        <div th:if="${h.prizeMoney > 0}" class="mb-3">
+                            <span class="prize-badge">
+                                <i class="bi bi-trophy-fill me-1"></i>
+                                €[[${h.prizeMoney}]] premio
+                            </span>
+                        </div>
+
+                        <a th:href="@{'/public/hackathon/' + ${h.id}}" class="btn-details">
+                            <i class="bi bi-eye me-2"></i>Scopri di più
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div th:if="${hackathons == null or hackathons.isEmpty()}" class="text-center py-5">
+            <div class="card border-0 shadow-lg p-5">
+                <i class="bi bi-calendar-x" style="font-size: 5rem; color: #ccc;"></i>
+                <h3 class="mt-3 text-muted">Nessun hackathon disponibile al momento</h3>
+                <p class="text-muted mb-4">Torna presto per scoprire nuove sfide!</p>
+                <div>
+                    <a href="/register" class="btn-login">
+                        <i class="bi bi-bell me-2"></i>Avvisami quando escono
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sezione delle caratteristiche-->
+    <section id="features" class="features-section">
+        <h2 class="text-center mb-5" style="font-weight: 700; color: var(--dark-color);">
+            Come funziona HackHub
+        </h2>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <h3 class="feature-title">1. Trova l'hackathon</h3>
+                    <p class="feature-text">
+                        Scegli tra decine di hackathon, filtra per tecnologia, tema o difficoltà.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <h3 class="feature-title">2. Forma il team</h3>
+                    <p class="feature-text">
+                        Crea il tuo team o unisciti a talenti con le tue stesse passioni.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-trophy-fill"></i>
+                    </div>
+                    <h3 class="feature-title">3. Vinci e impara</h3>
+                    <p class="feature-text">
+                        Partecipa, impara dai mentor e vinci premi in denaro e opportunità.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="text-center my-5">
+        <div class="card border-0 bg-transparent">
+            <div class="card-body p-5">
+                <h2 style="color: white; font-weight: 700;">Pronto a iniziare?</h2>
+                <p class="lead text-white opacity-75 mb-4">
+                    Unisciti a migliaia di sviluppatori, designer e innovatori.
+                </p>
+                <a href="/register" class="btn-login btn-lg">
+                    <i class="bi bi-rocket-takeoff me-2"></i>Registrati gratis
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer" id="contact">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h4 style="color: var(--primary-color); font-weight: 700;">
+                    <i class="bi bi-code-slash me-2"></i>HackHub
+                </h4>
+                <p class="text-muted">
+                    La piattaforma completa per gestire e partecipare agli hackathon più innovativi.
+                </p>
+                <div class="social-links">
+                    <a href="#" class="me-2 text-primary"><i class="bi bi-twitter fs-4"></i></a>
+                    <a href="#" class="me-2 text-primary"><i class="bi bi-linkedin fs-4"></i></a>
+                    <a href="#" class="me-2 text-primary"><i class="bi bi-github fs-4"></i></a>
+                </div>
+            </div>
+
+            <div class="col-md-2 mb-4">
+                <h5>Link utili</h5>
+                <ul class="footer-links">
+                    <li><a href="/public">Home</a></li>
+                    <li><a href="#hackathons">Hackathon</a></li>
+                    <li><a href="#features">Come funziona</a></li>
+                    <li><a href="#">FAQ</a></li>
+                </ul>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <h5>Risorse</h5>
+                <ul class="footer-links">
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Guide per mentor</a></li>
+                    <li><a href="#">Termini e condizioni</a></li>
+                    <li><a href="#">Privacy</a></li>
+                </ul>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <h5>Contatti</h5>
+                <ul class="footer-links">
+                    <li><i class="bi bi-envelope me-2"></i> info@hackhub.com</li>
+                    <li><i class="bi bi-telephone me-2"></i> +39 02 1234567</li>
+                    <li><i class="bi bi-geo-alt me-2"></i> Milano, Italia</li>
+                </ul>
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="text-center">
+            <small class="text-muted">
+                © 2024 HackHub. Tutti i diritti riservati. |
+                Sviluppato con <i class="bi bi-heart-fill text-danger"></i> per la community
+            </small>
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
+</body>
+</html>
