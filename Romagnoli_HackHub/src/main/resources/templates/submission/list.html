@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HackHub - Sottomissioni</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3a0ca3;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        .navbar-custom {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        .submission-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            border-left: 5px solid var(--primary-color);
+        }
+        .submission-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .submission-card.evaluated {
+            border-left-color: #28a745;
+        }
+        .submission-card.pending {
+            border-left-color: #ffc107;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 50px;
+            color: white;
+        }
+        .user-info a {
+            color: white;
+            text-decoration: none;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<!-- Barra di navigazione -->
+<nav class="navbar navbar-expand-lg navbar-dark navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">
+            <i class="bi bi-code-slash me-2"></i>
+            <strong>HackHub</strong>
+        </a>
+        <div class="d-flex">
+            <div class="user-info">
+                <i class="bi bi-person-circle me-1"></i>
+                <span th:text="${session.username}">Utente</span>
+                <span class="badge bg-light text-dark ms-2" th:text="${session.userRole}">Ruolo</span>
+                <a href="/logout" class="ms-3">
+                    <i class="bi bi-box-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/dashboard" class="text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Sottomissioni</li>
+        </ol>
+    </nav>
+
+    <!-- Header con statistiche -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="stat-card">
+                <h2 class="mb-0">
+                    <i class="bi bi-cloud-upload text-primary me-2"></i>
+                    Sottomissioni
+                    <small class="text-muted fs-6">(Totale: [[${submissions.size()}]])</small>
+                </h2>
+                <p class="text-muted mt-2">Elenco di tutte le sottomissioni a cui hai accesso</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista Sottomissioni -->
+    <div th:if="${submissions != null and !submissions.isEmpty()}">
+        <div class="row">
+            <div th:each="s : ${submissions}" class="col-md-6 mb-3">
+                <div class="submission-card"
+                     th:classappend="${s.evaluated} ? 'evaluated' : 'pending'">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title" th:text="${s.projectName}">Progetto</h5>
+                        <span th:if="${s.evaluated}" class="badge bg-success">
+                            <i class="bi bi-check-circle"></i> Valutato
+                        </span>
+                        <span th:if="${!s.evaluated}" class="badge bg-warning">
+                            <i class="bi bi-hourglass"></i> In attesa
+                        </span>
+                    </div>
+
+                    <p class="card-text mb-2">
+                        <i class="bi bi-people text-primary"></i>
+                        Team: <strong th:text="${s.teamName}"></strong>
+                    </p>
+
+                    <p class="card-text mb-2">
+                        <i class="bi bi-trophy text-primary"></i>
+                        Hackathon: <span th:text="${s.hackathonName}"></span>
+                    </p>
+
+                    <p th:if="${s.evaluated}" class="card-text mb-3">
+                        <i class="bi bi-star-fill text-warning"></i>
+                        Punteggio: <strong th:text="${s.score}"></strong>/10
+                    </p>
+
+                    <div class="mt-3">
+                        <a th:href="@{/submission/{id}(id=${s.team.id})}"
+                           class="btn btn-sm btn-outline-primary w-100">
+                            <i class="bi bi-eye me-2"></i>Visualizza Dettagli
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nessuna sottomissione -->
+    <div th:if="${submissions == null or submissions.isEmpty()}"
+         class="text-center py-5">
+        <div class="card shadow-sm p-5">
+            <i class="bi bi-cloud-upload display-1 text-muted"></i>
+            <h3 class="mt-3 text-muted">Nessuna sottomissione disponibile</h3>
+            <p class="text-muted mb-4">
+                Non ci sono sottomissioni da visualizzare per il tuo account.
+            </p>
+            <div>
+                <a href="/dashboard" class="btn btn-primary">
+                    <i class="bi bi-speedometer2 me-2"></i>Torna alla Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
