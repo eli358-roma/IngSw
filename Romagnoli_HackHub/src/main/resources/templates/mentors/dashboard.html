@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Mentore</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-success">
+    <div class="container">
+        <span class="navbar-brand">HackHub - Mentore</span>
+        <div class="text-white">
+            <span th:text="${session.username}"></span>
+            <a href="/logout" class="btn btn-sm btn-light ms-2">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <h2><i class="bi bi-chat-dots"></i> Dashboard Mentore</h2>
+
+    <!-- Statistiche -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h5 class="card-title">Hackathon assegnati</h5>
+                    <h2 th:text="${hackathons.size()}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <h5 class="card-title">Richieste in attesa</h5>
+                    <h2 th:text="${totalPending}">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Mie richieste</h5>
+                    <h2 th:text="${myRequests.size()}">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista hackathon -->
+    <h3 class="mt-4">I miei hackathon</h3>
+    <div class="row mt-3">
+        <div th:each="h : ${hackathons}" class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">[[${h.name}]]</h5>
+                    <p class="card-text">[[${h.description}]]</p>
+                    <a th:href="@{/mentor/hackathon/{id}(id=${h.id})}"
+                       class="btn btn-success w-100">
+                        <i class="bi bi-chat"></i> Gestisci richieste
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Richieste recenti -->
+    <h3 class="mt-4">Le mie richieste recenti</h3>
+    <div class="list-group mt-3">
+        <div th:each="req : ${myRequests}" class="list-group-item">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <h6>[[${req.title}]]</h6>
+                    <small class="text-muted">Team: [[${req.team.name}]]</small>
+                </div>
+                <span class="badge bg-primary">[[${req.status}]]</span>
+            </div>
+        </div>
+        <div th:if="${myRequests.isEmpty()}" class="list-group-item text-muted">
+            Nessuna richiesta assegnata
+        </div>
+    </div>
+</div>
+</body>
+</html>
