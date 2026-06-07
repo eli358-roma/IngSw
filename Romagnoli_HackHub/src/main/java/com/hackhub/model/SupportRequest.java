@@ -13,8 +13,8 @@ public class SupportRequest {
     private String title;
     private String description;
     private LocalDateTime requestDate;
-    private String status; // "PENDING", "ASSIGNED", "SCHEDULED", "RESOLVED"
-    private String calendarEventId; // ID dell'evento nel calendario esterno
+    private String status;
+    private String calendarEventId;
     private LocalDateTime scheduledDate;
 
     @ManyToOne
@@ -38,15 +38,7 @@ public class SupportRequest {
         this.team = team;
     }
 
-    public SupportRequest(String title, String description, Team team, User mentor) {
-        this(title, description, team);
-        this.mentor = mentor;
-        if (mentor != null) {
-            this.status = "ASSIGNED";
-        }
-    }
 
-    // Metodi utili
     public boolean isPending() {
         return "PENDING".equals(status);
     }
@@ -59,7 +51,6 @@ public class SupportRequest {
         return "RESOLVED".equals(status);
     }
 
-    // Getter e Setter
     public Long getId() {
         return id;
     }
@@ -100,17 +91,11 @@ public class SupportRequest {
         this.status = status;
     }
 
-    public String getCalendarEventId() {
-        return calendarEventId;
-    }
 
     public void setCalendarEventId(String calendarEventId) {
         this.calendarEventId = calendarEventId;
     }
 
-    public LocalDateTime getScheduledDate() {
-        return scheduledDate;
-    }
 
     public void setScheduledDate(LocalDateTime scheduledDate) {
         this.scheduledDate = scheduledDate;
