@@ -1,5 +1,6 @@
 package com.hackhub.service;
 
+import com.hackhub.model.Hackathon;
 import com.hackhub.model.SupportRequest;
 import com.hackhub.model.Team;
 import com.hackhub.model.User;
@@ -7,11 +8,14 @@ import com.hackhub.repository.SupportRequestRepository;
 import com.hackhub.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SupportRequestService {
@@ -25,8 +29,23 @@ public class SupportRequestService {
     @Autowired
     private UserRepository userRepository;
 
-    public SupportRequest createSupportRequest(Long teamId, String title, String description) {
+    @Autowired
+    private com.hackhub.pattern.facade.ExternalServiceFacade externalServiceFacade;
+
+    @Autowired
+    private NotificationService notificationService;
+
+    @Autowired
+    private UserService userService;
+
+    public SupportRequest createSupportRequest(Long teamId, String title, String description, Long userId) {
         Team team = teamService.getTeamById(teamId);
+
+        //verifica che l'utente sia un membro del team
+        User user = userService.getUserById(userId).orElse(null);
+        if (user == null || !team.hasMember(user)) {
+            throw new RuntimeException("Devi essere membro del team per creare richieste");
+        }
 
         SupportRequest request = new SupportRequest();
         request.setTeam(team);
@@ -38,6 +57,10 @@ public class SupportRequestService {
         return supportRequestRepository.save(request);
     }
 
+    /**
+     * Assegna un mentore a una richiesta di supporto
+     */
+    @Transactional
     public SupportRequest assignMentor(Long requestId, Long mentorId) {
         SupportRequest request = supportRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Richiesta non trovata"));
@@ -49,10 +72,31 @@ public class SupportRequestService {
             throw new RuntimeException("L'utente non è un mentor");
         }
 
+        Hackathon hackathon = request.getTeam().getHackathon();
+        if (!hackathon.getMentors().contains(mentor)) {
+            throw new RuntimeException("Questo mentore non è assegnato a questo hackathon");
+        }
+
         request.setMentor(mentor);
         request.setStatus("ASSIGNED");
 
-        return supportRequestRepository.save(request);
+        SupportRequest saved = supportRequestRepository.save(request);
+
+        String message = "Il mentore " + mentor.getUsername() + " è stato assegnato alla tua richiesta: " + request.getTitle();
+        for (User member : request.getTeam().getMembers()) {
+            notificationService.sendNotification("IN_APP", message, member);
+        }
+
+        return saved;
+    }
+
+    /**
+     * Ottiene tutte le richieste non assegnate per un hackathon
+     */
+    public List<SupportRequest> getUnassignedRequestsByHackathon(Long hackathonId) {
+        return supportRequestRepository.findByTeamHackathonId(hackathonId).stream()
+                .filter(r -> "PENDING".equals(r.getStatus()))
+                .collect(Collectors.toList());
     }
 
     public SupportRequest resolveRequest(Long requestId) {
@@ -76,57 +120,55 @@ public class SupportRequestService {
         return supportRequestRepository.findByStatus("PENDING");
     }
 
-    //Ottiene tutte le richieste per un hackathon
+    /**
+     * Ottiene tutte le richieste per un hackathon
+     */
     public List<SupportRequest> getRequestsByHackathon(Long hackathonId) {
         return supportRequestRepository.findByTeamHackathonId(hackathonId);
     }
 
-    //Programma una call con il mentore
-    @Autowired
-    private com.hackhub.pattern.facade.CalendarService calendarService;
-
-    public SupportRequest scheduleCall(Long requestId, LocalDateTime scheduledDate, String calendarEventId) {
+    /**
+     * Programma una call per una richiesta di supporto
+     */
+    @Transactional
+    public SupportRequest scheduleCall(Long requestId, LocalDateTime scheduledDate, Long mentorId) {
         SupportRequest request = supportRequestRepository.findById(requestId)
                 .orElseThrow(() -> new RuntimeException("Richiesta non trovata"));
 
-        if (request.getMentor() == null) {
-            throw new RuntimeException("Nessun mentore assegnato a questa richiesta");
+        if (!request.getMentor().getId().equals(mentorId)) {
+            throw new RuntimeException("Non sei il mentore assegnato a questa richiesta");
         }
 
+        //viene usato il CalendarService per programmare la call
+        String eventId = externalServiceFacade.scheduleMentorCall(
+                request.getMentor().getUsername(),
+                request.getMentor().getEmail(),
+                request.getTeam().getName(),
+                request.getTeam().getCreator().getEmail(),
+                scheduledDate,
+                scheduledDate.plusHours(1),
+                request.getTitle()
+        );
+
         request.setScheduledDate(scheduledDate);
-        request.setCalendarEventId(calendarEventId);
+        request.setCalendarEventId(eventId);
         request.setStatus("SCHEDULED");
 
-        // Invia notifica al team
+        SupportRequest saved = supportRequestRepository.save(request);
+
         String message = String.format(
-                "La tua richiesta di supporto '%s' è stata programmata per il %s",
+                "Call programmata per la richiesta '%s' il %s",
                 request.getTitle(),
                 scheduledDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
         );
 
-        // Usa il team per inviare notifica a tutti i membri
-        if (request.getTeam() != null && request.getTeam().getMembers() != null) {
-            for (User member : request.getTeam().getMembers()) {
-                // Qui potresti usare NotificationContext se lo hai injectato
-                System.out.println("🔔 Notifica a " + member.getUsername() + ": " + message);
-            }
+        for (User member : request.getTeam().getMembers()) {
+            notificationService.sendNotification("EMAIL", message, member);
         }
 
-        return supportRequestRepository.save(request);
+        return saved;
     }
 
-    /**
-     * Chiudi una richiesta
-     */
-    public SupportRequest closeRequest(Long requestId, String resolution) {
-        SupportRequest request = supportRequestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Richiesta non trovata"));
-
-        request.setStatus("RESOLVED");
-        request.setDescription(request.getDescription() + "\n\nRisoluzione: " + resolution);
-
-        return supportRequestRepository.save(request);
-    }
 
     /**
      * Ottiene statistiche sulle richieste
@@ -141,7 +183,6 @@ public class SupportRequestService {
         stats.put("scheduled", requests.stream().filter(r -> "SCHEDULED".equals(r.getStatus())).count());
         stats.put("resolved", requests.stream().filter(r -> "RESOLVED".equals(r.getStatus())).count());
 
-        // Tempo medio di risoluzione (simulato)
         stats.put("avgResolutionTime", "2.5 ore");
 
         return stats;
