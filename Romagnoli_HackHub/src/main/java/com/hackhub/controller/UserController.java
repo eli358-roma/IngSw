@@ -5,6 +5,9 @@ import com.hackhub.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -52,9 +55,36 @@ public class UserController {
         return ResponseEntity.ok(userService.getAvailableMentors());
     }
 
-    @PutMapping("/{id}/role")
-    public ResponseEntity<User> changeRole(@PathVariable Long id, @RequestBody Map<String, String> request) {
-        String newRole = request.get("role");
-        return ResponseEntity.ok(userService.updateUserRole(id, newRole));
+   @PutMapping("/{id}/role")
+    public ResponseEntity<?> changeRole(@PathVariable Long id, @RequestBody Map<String, String> request) {
+        try {
+            String newRole = request.get("role");
+            User updatedUser = userService.updateUserRole(id, newRole);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Ruolo aggiornato con successo");
+            response.put("userId", updatedUser.getId());
+            response.put("newRole", updatedUser.getRole());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("error", e.getMessage());
+
+            return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        try {
+            userService.deleteUser(id);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Utente eliminato con successo"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "error", e.getMessage()));
+        }
     }
 }
