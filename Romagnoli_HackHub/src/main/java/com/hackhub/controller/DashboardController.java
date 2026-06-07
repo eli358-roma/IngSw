@@ -1,9 +1,8 @@
 package com.hackhub.controller;
 
 import com.hackhub.model.Hackathon;
-import com.hackhub.model.SupportRequest;
 import com.hackhub.model.Team;
-import com.hackhub.model.User;
+import com.hackhub.service.DashboardService;
 import com.hackhub.service.HackathonService;
 import com.hackhub.service.SupportRequestService;
 import com.hackhub.service.TeamService;
@@ -12,17 +11,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 import java.util.List;
-import java.util.Random;
+
+/**
+ * Controller per la dashboard principale.
+ * Gestisce la visualizzazione delle statistiche aggregate per organizzatori.
+ * Utilizza DashboardService per separare la logica di business.
+ */
 
 @Controller
 public class DashboardController {
 
     @Autowired
-    private UserService userService;
+    private DashboardService dashboardService;
 
     @Autowired
     private HackathonService hackathonService;
@@ -33,92 +36,47 @@ public class DashboardController {
     @Autowired
     private SupportRequestService supportRequestService;
 
+    /**
+     * Dashboard principale
+     */
     @GetMapping("/dashboard")
     public String dashboard(Model model) {
         try {
-            // Recupera i dati
-            List<User> users = userService.getUsersByRole("USER");
-            List<User> organizers = userService.getUsersByRole("ORGANIZER");
-            List<User> judges = userService.getAvailableJudges();
-            List<User> mentors = userService.getAvailableMentors();
-            List<Hackathon> hackathons = hackathonService.getAllHackathons();
-            List<SupportRequest> pendingRequests=supportRequestService.getPendingRequests();
-            List<DashboardActivity> activities = new ArrayList<>();
+            // Ottieni tutti i dati dal service
+            DashboardService.DashboardData data = dashboardService.getDashboardData();
 
-            // Calcola i team totali
-            int totalTeams = 0;
-            for (Hackathon hackathon : hackathons) {
-                List<Team> teams = teamService.getTeamsByHackathon(hackathon.getId());
-                totalTeams += teams.size();
-            }
+            //statistiche principali
+            model.addAttribute("users", data.getUsers());
+            model.addAttribute("organizers", data.getOrganizers());
+            model.addAttribute("judges", data.getJudges());
+            model.addAttribute("mentors", data.getMentors());
+            model.addAttribute("hackathons", data.getHackathons());
+            model.addAttribute("pendingRequests", data.getPendingRequests());
 
-            // Calcola le sottomissioni totali
-            int totalSubmissions = 0;
-            for (Hackathon hackathon : hackathons) {
-                for (Team team : hackathon.getTeams()) {
-                    if (team.hasSubmittedProject()) {
-                        totalSubmissions++;
-                    }
-                }
-            }
+            model.addAttribute("totalUsers", data.getTotalUsers());
+            model.addAttribute("totalHackathons", data.getTotalHackathons());
+            model.addAttribute("totalTeams", data.getTotalTeams());
+            model.addAttribute("totalSubmissions", data.getTotalSubmissions());
+            model.addAttribute("teamsWithProject", data.getTeamsWithProject());
+            model.addAttribute("totalPendingRequests", data.getTotalPendingRequests());
 
-            String lastSubmissionDate = "N/A";
-            if (totalSubmissions > 0) {
-                lastSubmissionDate = LocalDateTime.now()
-                        .minusHours(2)
-                        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-            }
+            model.addAttribute("submissionRate", data.getSubmissionRate());
 
-            // Aggiungi dati al model
-            model.addAttribute("users", users);
-            model.addAttribute("organizers", organizers);
-            model.addAttribute("judges", judges);
-            model.addAttribute("mentors", mentors);
-            model.addAttribute("hackathons", hackathons);
-            model.addAttribute("totalUsers", users.size() + organizers.size() + judges.size() + mentors.size());
-            model.addAttribute("totalHackathons", hackathons.size());
-            model.addAttribute("totalTeams", totalTeams);
-            model.addAttribute("totalSubmissions", totalSubmissions);
-            model.addAttribute("lastSubmissionDate", lastSubmissionDate);
-            model.addAttribute("pendingRequests", pendingRequests.size());
-            
-            // Aggiungere informazioni di sistema
-            model.addAttribute("systemStatus", "online");
-            model.addAttribute("databaseStatus", "online");
-            model.addAttribute("servicesStatus", "online");
+            model.addAttribute("lastSubmissionDate", data.getLastSubmissionDate());
+            model.addAttribute("lastUpdated", data.getFormattedLastUpdated());
 
-            // Aggiungi attività da team
-            for (Hackathon h : hackathons) {
-                for (Team t : h.getTeams()) {
-                    if (t.hasSubmittedProject()) {
-                        activities.add(new DashboardActivity(
-                                "submission",
-                                "Team " + t.getName() + " ha inviato progetto per " + h.getName(),
-                                LocalDateTime.now().minusHours(new Random().nextInt(24)),
-                                t.getCreator() != null ? t.getCreator().getUsername() : "Sconosciuto"
-                        ));
-                    }
-                }
-            }
+            model.addAttribute("systemStatus", data.getSystemStatus());
+            model.addAttribute("databaseStatus", data.getDatabaseStatus());
+            model.addAttribute("servicesStatus", data.getServicesStatus());
 
-            for (SupportRequest req : pendingRequests) {
-                activities.add(new DashboardActivity(
-                        "support",
-                        "Richiesta supporto: " + req.getTitle(),
-                        req.getRequestDate(),
-                        req.getTeam() != null && req.getTeam().getCreator() != null ?
-                                req.getTeam().getCreator().getUsername() : "Sconosciuto"
-                ));
-            }
+            model.addAttribute("hackathonStatusStats", data.getHackathonStatusStats());
 
-            activities.sort((a1, a2) -> a2.getTimestamp().compareTo(a1.getTimestamp()));
-            if (activities.size() > 5) {
-                activities = activities.subList(0, 5);
-            }
+            model.addAttribute("evaluationStats", data.getEvaluationStats());
 
-            model.addAttribute("recentActivities", activities);
+            model.addAttribute("recentActivities", data.getRecentActivities());
 
-            
+            model.addAttribute("topTeams", dashboardService.getTopTeams(5));
+
             return "dashboard";
 
         } catch (Exception e) {
@@ -128,46 +86,72 @@ public class DashboardController {
         }
     }
 
-    // Classe interna per attività dashboard
-    public static class DashboardActivity {
-        private String type;
-        private String description;
-        private LocalDateTime timestamp;
-        private String user;
+    /**
+     * Dashboard JSON (per API REST)
+     */
+    @GetMapping("/api/dashboard")
+    @ResponseBody
+    public DashboardService.DashboardData dashboardApi() {
+        return dashboardService.getDashboardData();
+    }
 
-        public DashboardActivity(String type, String description, LocalDateTime timestamp, String user) {
-            this.type = type;
-            this.description = description;
-            this.timestamp = timestamp;
-            this.user = user;
-        }
+    /**
+     * Dashboard semplificata
+     */
+    @GetMapping("/dashboard/simple")
+    public String dashboardSimple(Model model) {
+        try {
+            DashboardService.DashboardData data = dashboardService.getDashboardData();
 
-        public String getType() { return type; }
-        public String getDescription() { return description; }
-        public LocalDateTime getTimestamp() { return timestamp; }
-        public String getUser() { return user; }
+            model.addAttribute("totalUsers", data.getTotalUsers());
+            model.addAttribute("totalHackathons", data.getTotalHackathons());
+            model.addAttribute("totalTeams", data.getTotalTeams());
+            model.addAttribute("totalSubmissions", data.getTotalSubmissions());
+            model.addAttribute("recentActivities", data.getRecentActivities());
 
-        public String getFormattedTime() {
-            return timestamp.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-        }
+            return "dashboard-simple";
 
-        public String getIcon() {
-            return switch (type) {
-                case "submission" -> "bi-cloud-upload";
-                case "support" -> "bi-chat-dots";
-                case "team" -> "bi-people";
-                default -> "bi-info-circle";
-            };
-        }
-
-        public String getColor() {
-            return switch (type) {
-                case "submission" -> "success";
-                case "support" -> "warning";
-                case "team" -> "primary";
-                default -> "secondary";
-            };
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "error";
         }
     }
-}
 
+    @GetMapping("/dashboard/stats")
+    @ResponseBody
+    public DashboardStats getQuickStats() {
+        DashboardStats stats = new DashboardStats();
+
+        List<Hackathon> hackathons = hackathonService.getAllHackathons();
+        int totalTeams = 0;
+        int totalSubmissions = 0;
+
+        for (Hackathon h : hackathons) {
+            List<Team> teams = teamService.getTeamsByHackathon(h.getId());
+            totalTeams += teams.size();
+            totalSubmissions += teams.stream().filter(Team::hasSubmittedProject).count();
+        }
+
+        stats.setTotalHackathons(hackathons.size());
+        stats.setTotalTeams(totalTeams);
+        stats.setTotalSubmissions(totalSubmissions);
+        stats.setPendingRequests(supportRequestService.getPendingRequests().size());
+
+        return stats;
+    }
+
+    public static class DashboardStats {
+        private int totalHackathons;
+        private int totalTeams;
+        private int totalSubmissions;
+        private int pendingRequests;
+
+        public void setTotalHackathons(int totalHackathons) { this.totalHackathons = totalHackathons; }
+
+        public void setTotalTeams(int totalTeams) { this.totalTeams = totalTeams; }
+
+        public void setTotalSubmissions(int totalSubmissions) { this.totalSubmissions = totalSubmissions; }
+
+        public void setPendingRequests(int pendingRequests) { this.pendingRequests = pendingRequests; }
+    }
+}
