@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HackHub - Lista Hackathon</title>
+    <title th:text="'HackHub - Gestione ' + ${hackathon.name}">HackHub - Gestione Hackathon</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
@@ -16,29 +16,61 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
         }
         .navbar-custom {
             background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .card-hackathon {
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
+        }
+        .navbar-brand i {
+            color: var(--warning-color);
+            margin-right: 10px;
+        }
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 20px;
+            border-radius: 50px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .user-info a {
+            color: white;
+            text-decoration: none;
+            padding: 5px 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50px;
+            transition: all 0.3s;
+        }
+        .user-info a:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .management-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
             border-left: 5px solid var(--primary-color);
-            transition: transform 0.3s, box-shadow 0.3s;
         }
-        .card-hackathon:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        .management-card.warning {
+            border-left-color: var(--warning-color);
         }
-        .status-badge {
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
+        .management-card.success {
+            border-left-color: #28a745;
         }
         .btn-hackhub {
             background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
             color: white;
             border: none;
-            padding: 8px 20px;
+            padding: 10px 25px;
             border-radius: 8px;
             transition: all 0.3s;
         }
@@ -46,6 +78,31 @@
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
             color: white;
+        }
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin-bottom: 20px;
+        }
+        .breadcrumb-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        .team-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .team-item:hover {
+            background: #f8f9fa;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -57,110 +114,437 @@
             <i class="bi bi-code-slash me-2"></i>
             <strong>HackHub</strong>
         </a>
-        <div class="navbar-nav ms-auto">
-            <a href="/dashboard" class="nav-link">
-                <i class="bi bi-speedometer2 me-1"></i>Dashboard
-            </a>
+        <div class="d-flex">
+            <div class="user-info">
+                <i class="bi bi-person-circle me-1"></i>
+                <span th:text="${session.username}">Organizzatore</span>
+                <span class="badge bg-light text-dark ms-2" th:text="${session.userRole}">ORGANIZER</span>
+                <a href="/logout" class="ms-3">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </div>
         </div>
     </div>
 </nav>
 
-<div class="container mt-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1><i class="bi bi-trophy me-2 text-primary"></i>Lista Hackathon</h1>
-            <p class="text-muted">Gestisci tutti gli hackathon della piattaforma</p>
-        </div>
-        <div>
-            <a th:if="${session.userRole == 'ORGANIZER'}"
-               href="/hackathons/create"
-               class="btn btn-primary">
-                <i class="bi bi-plus-circle me-1"></i>Nuovo Hackathon
+<div class="container mt-4" th:with="h=${hackathon}">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/hackathons">Hackathon</a></li>
+            <li class="breadcrumb-item"><a th:href="@{/hackathons/{id}(id=${h.id})}" th:text="${h.name}">Nome Hackathon</a></li>
+            <li class="breadcrumb-item active">Gestione</li>
+        </ol>
+    </nav>
+
+    <!-- Solo l'organizzatore può vedere questa pagina -->
+    <div th:if="${session.userId != h.organizer.id}" class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <strong>Accesso negato:</strong> Solo l'organizzatore può gestire questo hackathon.
+        <div class="mt-3">
+            <a href="/hackathons" class="btn btn-primary">
+                <i class="bi bi-arrow-left"></i> Torna alla lista
             </a>
         </div>
     </div>
 
-    <!-- Filtri -->
-    <div class="card mb-4">
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4">
-                    <select class="form-select" id="statusFilter">
-                        <option value="">Tutti gli stati</option>
-                        <option value="INSCRIZIONE">In Iscrizione</option>
-                        <option value="IN_CORSO">In Corso</option>
-                        <option value="IN_VALUTAZIONE">In Valutazione</option>
-                        <option value="CONCLUSO">Concluso</option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <input type="text" class="form-control" id="searchInput" placeholder="Cerca hackathon...">
-                </div>
-            </div>
+    <div th:if="${session.userId == h.organizer.id}">
+        <h1 class="mb-4">
+            <i class="bi bi-gear me-2 text-primary"></i>
+            Gestione Hackathon: <span th:text="${h.name}"></span>
+        </h1>
+
+        <div th:if="${param.success}" class="alert alert-success alert-dismissible fade show">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${param.success}">Operazione completata con successo!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-    </div>
 
-    <!-- Lista hackathon -->
-    <div th:if="${hackathons != null and !hackathons.isEmpty()}">
-        <div class="row">
-            <div class="col-md-6 col-lg-4 mb-4" th:each="hackathon : ${hackathons}">
-                <div class="card h-100 card-hackathon">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title" th:text="${hackathon.name}">Nome Hackathon</h5>
-                            <span th:switch="${hackathon.status}" class="status-badge">
-                                    <span th:case="'INSCRIZIONE'" class="badge bg-primary">In Iscrizione</span>
-                                    <span th:case="'IN_CORSO'" class="badge bg-success">In Corso</span>
-                                    <span th:case="'IN_VALUTAZIONE'" class="badge bg-warning">In Valutazione</span>
-                                    <span th:case="'CONCLUSO'" class="badge bg-secondary">Concluso</span>
-                                </span>
-                        </div>
-                        <p class="card-text text-muted" th:text="${hackathon.description}">Descrizione...</p>
+        <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${param.error}">Errore durante l'operazione!</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
 
-                        <div class="mt-3">
-                            <div class="d-flex justify-content-between mb-2">
-                                <small><i class="bi bi-people me-1"></i>Team:</small>
-                                <span class="badge bg-info" th:text="${#lists.size(hackathon.teams)}">0</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <small><i class="bi bi-calendar me-1"></i>Iscrizioni fino:</small>
-                                <small th:text="${#temporals.format(hackathon.registrationDeadline, 'dd/MM/yyyy')}">01/01/2024</small>
-                            </div>
-                            <div class="d-flex justify-content-between">
-                                <small><i class="bi bi-person-badge me-1"></i>Organizzatore:</small>
-                                <small th:text="${hackathon.organizer != null ? hackathon.organizer.username : 'N/D'}">Admin</small>
-                            </div>
-                        </div>
-
-                        <div class="mt-3 d-flex gap-2">
-                            <a th:href="@{/hackathons/{id}(id=${hackathon.id})}" class="btn btn-sm btn-outline-primary flex-grow-1">
-                                <i class="bi bi-eye me-1"></i>Dettagli
-                            </a>
-                            <a th:href="@{/hackathons/{id}/manage(id=${hackathon.id})}" class="btn btn-sm btn-outline-success flex-grow-1">
-                                <i class="bi bi-gear me-1"></i>Gestisci
-                            </a>
+        <!-- Riepilogo Hackathon -->
+        <div class="management-card">
+            <div class="row">
+                <div class="col-md-8">
+                    <h5 class="mb-3">
+                        <i class="bi bi-info-circle text-primary me-2"></i>
+                        Informazioni Hackathon
+                    </h5>
+                    <p><strong>Nome:</strong> <span th:text="${h.name}"></span></p>
+                    <p><strong>Descrizione:</strong> <span th:text="${h.description}"></span></p>
+                    <p><strong>Stato attuale:</strong>
+                        <span th:switch="${h.status}" class="status-badge">
+                                <span th:case="'INSCRIZIONE'" class="badge bg-primary">In Iscrizione</span>
+                                <span th:case="'IN_CORSO'" class="badge bg-success">In Corso</span>
+                                <span th:case="'IN_VALUTAZIONE'" class="badge bg-warning">In Valutazione</span>
+                                <span th:case="'CONCLUSO'" class="badge bg-secondary">Concluso</span>
+                            </span>
+                    </p>
+                    <p><strong>Premio:</strong> €<span th:text="${h.prizeMoney}"></span></p>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Statistiche Rapide</h6>
+                            <p class="mb-1">Team iscritti: <strong th:text="${#lists.size(h.teams)}">0</strong></p>
+                            <p class="mb-1">Progetti inviati:
+                                <strong th:text="${#lists.size(h.teams.?[projectName != null])}">0</strong>
+                            </p>
+                            <p class="mb-0">Team valutati:
+                                <strong th:text="${#lists.size(h.teams.?[score != null])}">0</strong>
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Nessun hackathon -->
-    <div th:if="${hackathons == null or hackathons.isEmpty()}" class="text-center py-5">
-        <i class="bi bi-calendar-x display-1 text-muted"></i>
-        <h3 class="mt-3 text-muted">Nessun hackathon disponibile</h3>
-        <p class="text-muted">Inizia creando il tuo primo hackathon!</p>
-        <!-- Pulsante visibile SOLO agli ORGANIZZATORI -->
-        <a th:if="${session.userRole == 'ORGANIZER'}"
-           href="/hackathons/create"
-           class="btn btn-hackhub mt-3">
-            <i class="bi bi-plus-circle me-2"></i>Crea Nuovo Hackathon
-        </a>
+        <!-- Gestione stato -->
+        <div class="management-card">
+            <h5 class="mb-3">
+                <i class="bi bi-arrow-repeat text-primary me-2"></i>
+                Cambia Stato
+            </h5>
+            <div class="row">
+                <div class="col-md-8">
+                    <p class="text-muted">Modifica lo stato dell'hackathon per avanzare nelle fasi.</p>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select mb-2" id="statusSelect">
+                        <option value="INSCRIZIONE" th:selected="${h.status == 'INSCRIZIONE'}">In Iscrizione</option>
+                        <option value="IN_CORSO" th:selected="${h.status == 'IN_CORSO'}">In Corso</option>
+                        <option value="IN_VALUTAZIONE" th:selected="${h.status == 'IN_VALUTAZIONE'}">In Valutazione</option>
+                        <option value="CONCLUSO" th:selected="${h.status == 'CONCLUSO'}">Concluso</option>
+                    </select>
+                    <button class="btn btn-primary w-100" onclick="updateStatus()">
+                        <i class="bi bi-check-circle"></i> Aggiorna Stato
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestione giudice -->
+        <div class="management-card">
+            <h5 class="mb-3">
+                <i class="bi bi-award text-primary me-2"></i>
+                Giudice
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Giudice attuale:</strong></p>
+                    <div th:if="${h.judge != null}" class="alert alert-info">
+                        <i class="bi bi-person-circle me-2"></i>
+                        <span th:text="${h.judge.username}"></span> (<span th:text="${h.judge.email}"></span>)
+                    </div>
+                    <div th:if="${h.judge == null}" class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Nessun giudice assegnato
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Assegna nuovo giudice:</strong></p>
+                    <div class="input-group">
+                        <select class="form-select" id="judgeSelect">
+                            <option value="">Seleziona giudice...</option>
+                            <option th:each="judge : ${availableJudges}"
+                                    th:value="${judge.id}"
+                                    th:text="${judge.username + ' (' + judge.email + ')'}"></option>
+                        </select>
+                        <button class="btn btn-primary" onclick="assignJudge()">
+                            <i class="bi bi-person-plus"></i> Assegna
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestione mentori -->
+        <div class="management-card">
+            <h5 class="mb-3">
+                <i class="bi bi-chat-dots text-primary me-2"></i>
+                Mentori
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Mentori attuali:</strong></p>
+                    <div th:if="${not #lists.isEmpty(h.mentors)}">
+                        <div th:each="mentor : ${h.mentors}" class="alert alert-info mb-2">
+                            <i class="bi bi-person-circle me-2"></i>
+                            <span th:text="${mentor.username}"></span>
+                            <button class="btn btn-sm btn-danger float-end"
+                                    onclick="removeMentor([[${mentor.id}]])">
+                                <i class="bi bi-person-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(h.mentors)}" class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Nessun mentore assegnato
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Aggiungi mentore:</strong></p>
+                    <div class="input-group">
+                        <select class="form-select" id="mentorSelect">
+                            <option value="">Seleziona mentore...</option>
+                            <option th:each="mentor : ${availableMentors}"
+                                    th:value="${mentor.id}"
+                                    th:text="${mentor.username + ' (' + mentor.email + ')'}"></option>
+                        </select>
+                        <button class="btn btn-success" onclick="addMentor()">
+                            <i class="bi bi-person-plus"></i> Aggiungi
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista dei team e delle valutazioni -->
+        <div class="management-card">
+            <h5 class="mb-3">
+                <i class="bi bi-people text-primary me-2"></i>
+                Team Iscritti
+            </h5>
+            <div th:if="${#lists.isEmpty(h.teams)}" class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Nessun team iscritto a questo hackathon.
+            </div>
+            <div th:if="${not #lists.isEmpty(h.teams)}">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>Team</th>
+                            <th>Membri</th>
+                            <th>Progetto</th>
+                            <th>Punteggio</th>
+                            <th>Stato</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="team : ${h.teams}">
+                            <td>
+                                <strong th:text="${team.name}"></strong>
+                                <br>
+                                <small class="text-muted" th:text="'Creato da: ' + ${team.creator.username}"></small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info" th:text="${#lists.size(team.members)}"></span>
+                                <span th:text="'/' + ${h.maxTeamSize}"></span>
+                            </td>
+                            <td>
+                                        <span th:if="${team.hasSubmittedProject()}" class="text-success">
+                                            <i class="bi bi-check-circle"></i> Inviato
+                                        </span>
+                                <span th:if="${!team.hasSubmittedProject()}" class="text-secondary">
+                                            <i class="bi bi-clock"></i> In attesa
+                                        </span>
+                            </td>
+                            <td>
+                                        <span th:if="${team.score != null}"
+                                              class="badge bg-success"
+                                              th:text="${team.score} + '/10'">8.5/10</span>
+                                <span th:if="${team.score == null}" class="text-muted">-</span>
+                            </td>
+                            <td>
+                                <span th:if="${team.evaluated}" class="badge bg-success">Valutato</span>
+                                <span th:if="${!team.evaluated and team.hasSubmittedProject()}"
+                                      class="badge bg-warning">In attesa</span>
+                                <span th:if="${!team.hasSubmittedProject()}" class="badge bg-secondary">Nessun progetto</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proclama il vincitore -->
+        <div th:if="${h.status == 'CONCLUSO' and h.winnerTeamId == null and not #lists.isEmpty(h.teams)}"
+             class="management-card warning">
+            <h5 class="mb-3">
+                <i class="bi bi-trophy text-warning me-2"></i>
+                Proclama Vincitore
+            </h5>
+            <p class="text-muted">Seleziona il team vincitore tra quelli che hanno ricevuto una valutazione.</p>
+
+            <div class="row">
+                <div th:each="team : ${h.teams}" class="col-md-6 mb-3">
+                    <div th:if="${team.score != null}" class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0" th:text="${team.name}">Nome Team</h6>
+                                    <small class="text-muted" th:text="'Punteggio: ' + ${team.score} + '/10'"></small>
+                                </div>
+                                <div>
+                                    <button class="btn btn-warning btn-sm"
+                                            onclick="declareWinner([[${team.id}]], '[[${team.name}]]')">
+                                        <i class="bi bi-trophy"></i> Proclama Vincitore
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messaggio se l'hackathon non è ancora concluso -->
+        <div th:if="${h.status != 'CONCLUSO'}" class="management-card">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                Per proclamare un vincitore, l'hackathon deve essere in stato "Concluso".
+                Stato attuale: <strong th:text="${h.status}"></strong>
+            </div>
+        </div>
+
+        <!-- Pulsanti di navigazione -->
+        <div class="mt-4 mb-5">
+            <a th:href="@{/hackathons/{id}(id=${h.id})}" class="btn btn-outline-primary">
+                <i class="bi bi-eye"></i> Visualizza Dettagli
+            </a>
+            <a href="/hackathons" class="btn btn-outline-secondary ms-2">
+                <i class="bi bi-list"></i> Tutti gli Hackathon
+            </a>
+        </div>
     </div>
 </div>
 
+<script>
+
+    function declareWinner(teamId, teamName) {
+        if (!confirm('Sei sicuro di voler proclamare "' + teamName + '" come vincitore?')) {
+        return;
+        }
+
+        console.log('Proclamazione vincitore - Team ID:', teamId, 'Team Name:', teamName);
+
+        fetch('/api/hackathons/' + [[${hackathon.id}]] + '/declare-winner', {
+        method: 'POST',
+        headers: {
+           'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({teamId: teamId})
+        })
+        .then(async response => {
+        const text = await response.text();
+        console.log('Risposta:', response.status, text);
+
+        if (response.ok) {
+           // Redirect con messaggio di successo
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?success=' + encodeURIComponent(text);
+        } else {
+           throw new Error(text || 'Errore durante la proclamazione');
+        }
+        })
+        .catch(error => {
+        console.error('Errore:', error);
+        alert('Errore: ' + error.message);
+        });
+        }
+        // Aggiorna stato hackathon
+        function updateStatus() {
+        const newStatus = document.getElementById('statusSelect').value;
+
+        fetch('/api/hackathons/' + [[${hackathon.id}]] + '/status', {
+           method: 'PUT',
+           headers: {'Content-Type': 'application/json'},
+           body: JSON.stringify({status: newStatus})
+        })
+        .then(response => response.json())
+        .then(data => {
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?success=Stato+aggiornato+a+' + newStatus;
+        })
+        .catch(error => {
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?error=' + encodeURIComponent(error.message);
+        });
+        }
+
+        // Assegna giudice
+        function assignJudge() {
+        const judgeId = document.getElementById('judgeSelect').value;
+        if (!judgeId) {
+           alert('Seleziona un giudice');
+           return;
+        }
+
+        fetch('/api/hackathons/' + [[${hackathon.id}]] + '/assign-judge', {
+           method: 'PUT',
+           headers: {'Content-Type': 'application/json'},
+           body: JSON.stringify({judgeId: judgeId})
+        })
+         .then(response => response.json())
+        .then(data => {
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?success=Giudice+assegnato+con+successo';
+        })
+        .catch(error => {
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?error=' + encodeURIComponent(error.message);
+        });
+        }
+
+        // Aggiungi mentore
+        function addMentor() {
+        const mentorId = document.getElementById('mentorSelect').value;
+        if (!mentorId) {
+           alert('Seleziona un mentore');
+           return;
+        }
+
+        fetch('/api/hackathons/' + [[${hackathon.id}]] + '/add-mentor', {
+           method: 'POST',
+           headers: {'Content-Type': 'application/json'},
+           body: JSON.stringify({mentorId: mentorId})
+        })
+        .then(response => response.json())
+        .then(data => {
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?success=Mentore+aggiunto+con+successo';
+        })
+        .catch(error => {
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?error=' + encodeURIComponent(error.message);
+        });
+        }
+
+        // Rimuovi mentore
+        function removeMentor(mentorId) {
+        if (!confirm('Rimuovere questo mentore?')) return;
+
+        fetch('/api/hackathons/' + [[${hackathon.id}]] + '/remove-mentor/' + mentorId, {
+           method: 'DELETE',
+           headers: {'Content-Type': 'application/json'}
+        })
+        .then(response => response.json())
+        .then(data => {
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?success=Mentore+rimosso';
+        })
+        .catch(error => {
+           alert('Errore: ' + error.message);
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?error=' + encodeURIComponent(error.message);
+        });
+        }
+
+        // Proclama vincitore
+        function declareWinner(teamId, teamName) {
+        if (!confirm('Sei sicuro di voler proclamare "' + teamName + '" come vincitore?')) return;
+
+        fetch('/api/hackathons/' + [[${hackathon.id}]] + '/declare-winner', {
+           method: 'POST',
+           headers: {'Content-Type': 'application/json'},
+           body: JSON.stringify({teamId: teamId})
+        })
+        .then(response => response.text())
+        .then(message => {
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?success=' + encodeURIComponent(message);
+        })
+        .catch(error => {
+           window.location.href = '/hackathons/' + [[${hackathon.id}]] + '/manage?error=' + encodeURIComponent(error.message);
+        });
+        }
+</script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
