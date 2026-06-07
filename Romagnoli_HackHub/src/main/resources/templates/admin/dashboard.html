@@ -109,18 +109,19 @@
                     <td th:text="${user.username}">Mario</td>
                     <td th:text="${user.email}">mario@test.com</td>
                     <td>
-                        <select class="form-select form-select-sm"
-                                th:value="${user.role}"
-                                onchange="changeRole(this, ${user.id})">
-                            <option value="USER">Partecipante</option>
-                            <option value="ORGANIZER">Organizzatore</option>
-                            <option value="JUDGE">Giudice</option>
-                            <option value="MENTOR">Mentore</option>
+                        <select class="form-select form-select-sm" th:id="'role_' + ${user.id}">
+                            <option value="USER" th:selected="${user.role == 'USER'}">Partecipante</option>
+                            <option value="ORGANIZER" th:selected="${user.role == 'ORGANIZER'}">Organizzatore</option>
+                            <option value="JUDGE" th:selected="${user.role == 'JUDGE'}">Giudice</option>
+                            <option value="MENTOR" th:selected="${user.role == 'MENTOR'}">Mentore</option>
                         </select>
                     </td>
                     <td th:text="${user.team != null ? user.team.name : 'Nessun team'}">Team1</td>
                     <td>
-                        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">
+                        <button class="btn btn-sm btn-warning" th:onclick="'updateRole(' + ${user.id} + ')'">
+                            <i class="bi bi-save"></i> Aggiorna
+                        </button>
+                        <button class="btn btn-sm btn-danger" th:onclick="'deleteUser(' + ${user.id} + ')'" th:if="${user.id != session.userId}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -157,7 +158,7 @@
                     <td th:text="${#lists.size(h.teams)}">5</td>
                     <td th:text="${h.prizeMoney != null ? h.prizeMoney + '€' : '-'}">5000€</td>
                     <td>
-                        <button class="btn btn-sm btn-danger" onclick="deleteHackathon(${h.id})">
+                        <button class="btn btn-sm btn-danger" th:onclick="'deleteHackathon(' + ${h.id} + ')'">
                             <i class="bi bi-trash"></i>
                         </button>
                     </td>
@@ -200,7 +201,7 @@
     </div>
 </div>
 
-<!-- Modal Nuovo Utente -->
+<!-- Modallo Nuovo Utente -->
 <div class="modal fade" id="addUserModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -255,6 +256,11 @@
             role: document.getElementById('newRole').value
         };
 
+        if (!user.username || !user.email) {
+            alert('Compila tutti i campi');
+            return;
+        }
+
         fetch('/api/users/register', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -264,29 +270,81 @@
             if(response.ok) {
                 alert('Utente creato con successo!');
                 location.reload();
+            } else {
+                return response.text().then(text => { throw new Error(text); });
             }
         })
-        .catch(error => alert('Errore: ' + error));
+        .catch(error => alert('Errore: ' + error.message));
     }
 
-    function changeRole(select, userId) {
-        const newRole = select.value;
+    function updateRole(userId) {
+        const selectElement = document.getElementById('role_' + userId);
+        if (!selectElement) {
+            alert('Errore: elemento non trovato');
+            return;
+        }
+
+        const newRole = selectElement.value;
+
+        console.log('Aggiornamento ruolo per utente', userId, 'a', newRole);
+
         fetch('/api/users/' + userId + '/role', {
             method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({role: newRole})
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ role: newRole })
         })
         .then(response => {
-            if(response.ok) {
-                alert('Ruolo aggiornato!');
+            if (response.ok) {
+                return response.text();
+            } else {
+                return response.text().then(text => { throw new Error(text); });
             }
+        })
+        .then(message => {
+            alert(message);
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore: ' + error.message);
         });
     }
 
     function deleteUser(userId) {
-        if(confirm('Sei sicuro di voler eliminare questo utente?')) {
-            alert('Funzionalità di eliminazione in sviluppo');
+        if(!confirm('Sei sicuro di voler eliminare questo utente? Questa operazione è irreversibile!')) {
+            return;
         }
+
+        console.log('Eliminazione utente ID:', userId);
+
+        fetch('/api/users/' + userId, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(async response => {
+            const text = await response.text();
+            console.log('Risposta:', response.status, text);
+
+            if (response.ok) {
+                alert('Utente eliminato con successo!');
+                location.reload();
+            } else {
+                let errorMsg = text;
+                try {
+                    const errorData = JSON.parse(text);
+                    errorMsg = errorData.error || errorData.message || text;
+                } catch(e) {}
+                alert(errorMsg);
+            }
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            alert('Errore: ' + error.message);
+        });
     }
 
     function deleteHackathon(hackathonId) {
