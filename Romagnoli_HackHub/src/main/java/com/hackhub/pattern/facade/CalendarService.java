@@ -11,7 +11,7 @@ import java.util.*;
 
 /**
  * Servizio per gestire le prenotazioni di call tra mentori e team
- * Simula l'integrazione con un servizio di calendario esterno (Google Calendar, Outlook, etc.)
+ * Simula l'integrazione con un servizio di calendario esterno
  */
 @Service
 public class CalendarService {
@@ -24,7 +24,7 @@ public class CalendarService {
     @Value("${calendar.service.provider:mock}")
     private String provider;
 
-    // Mappa per tracciare gli eventi creati (simula database esterno)
+    // Mappa per tracciare gli eventi creati
     private final Map<String, CalendarEvent> events = new HashMap<>();
 
     /**
@@ -39,10 +39,10 @@ public class CalendarService {
             return createMockEvent(title, startTime, endTime);
         }
 
-        // Genera ID evento univoco
+        //genera ID per l'evento univoco
         String eventId = generateEventId();
 
-        // Crea l'evento
+        //crea l'evento
         CalendarEvent event = new CalendarEvent();
         event.setId(eventId);
         event.setTitle(title);
@@ -55,17 +55,15 @@ public class CalendarService {
         event.setStatus("SCHEDULED");
         event.setCreatedAt(LocalDateTime.now());
 
-        // Simula chiamata API al servizio esterno
+        //simula chiamata API al servizio esterno
         if ("google".equalsIgnoreCase(provider)) {
             return scheduleGoogleCalendarEvent(event);
         } else if ("outlook".equalsIgnoreCase(provider)) {
             return scheduleOutlookEvent(event);
         } else {
-            // Mock provider - salva in memoria
             events.put(eventId, event);
             logger.info("Mock calendar event created: {}", eventId);
 
-            // Simula ritardo di rete
             simulateNetworkDelay();
 
             return event;
@@ -90,7 +88,6 @@ public class CalendarService {
         event.setStatus("CANCELLED");
         event.setCancelledAt(LocalDateTime.now());
 
-        // In produzione, qui chiameresti l'API esterna
         logger.info("Event cancelled: {}", eventId);
         simulateNetworkDelay();
 
@@ -134,7 +131,7 @@ public class CalendarService {
      */
     public boolean isMentorAvailable(String mentorEmail, LocalDateTime startTime,
                                      LocalDateTime endTime) {
-        // Controlla se il mentore ha già eventi in quell'orario
+        //controlla se il mentore ha già eventi in quell'orario
         return events.values().stream()
                 .filter(e -> e.getAttendees().contains(mentorEmail))
                 .filter(e -> e.getStatus().equals("SCHEDULED"))
@@ -142,30 +139,30 @@ public class CalendarService {
     }
 
     /**
-     * Metodo per integrazione con Google Calendar (mock)
+     * Metodo per integrazione con Google Calendar
      */
     private CalendarEvent scheduleGoogleCalendarEvent(CalendarEvent event) {
         logger.info("Scheduling Google Calendar event for: {}", event.getOrganizerEmail());
 
-        // Simula chiamata API a Google Calendar
+        //simula la chiamata API a Google Calendar
         String googleEventId = "google_" + UUID.randomUUID().toString();
         event.setExternalId(googleEventId);
         event.setProvider("Google Calendar");
 
         events.put(event.getId(), event);
-        simulateNetworkDelay(1500); // Simula chiamata più lunga
+        simulateNetworkDelay(1500);
 
         logger.info("Google Calendar event created successfully: {}", googleEventId);
         return event;
     }
 
     /**
-     * Metodo per integrazione con Outlook Calendar (mock)
+     * Metodo per integrazione con Outlook Calendar
      */
     private CalendarEvent scheduleOutlookEvent(CalendarEvent event) {
         logger.info("Scheduling Outlook Calendar event for: {}", event.getOrganizerEmail());
 
-        // Simula chiamata API a Outlook
+        //simula la chiamata API ad Outlook
         String outlookEventId = "outlook_" + UUID.randomUUID().toString();
         event.setExternalId(outlookEventId);
         event.setProvider("Outlook Calendar");
@@ -178,7 +175,7 @@ public class CalendarService {
     }
 
     /**
-     * Crea un evento mock (per testing o quando il servizio è disabilitato)
+     * Crea un evento per testing o per quando il servizio è disabilitato
      */
     private CalendarEvent createMockEvent(String title, LocalDateTime startTime, LocalDateTime endTime) {
         CalendarEvent event = new CalendarEvent();
@@ -194,8 +191,6 @@ public class CalendarService {
         return event;
     }
 
-    // ========== METODI DI UTILITÀ ==========
-
     private String generateEventId() {
         return "event_" + System.currentTimeMillis() + "_" +
                 UUID.randomUUID().toString().substring(0, 8);
@@ -207,7 +202,7 @@ public class CalendarService {
     }
 
     private void simulateNetworkDelay() {
-        simulateNetworkDelay(800); // Default 800ms
+        simulateNetworkDelay(800);
     }
 
     private void simulateNetworkDelay(long milliseconds) {
@@ -236,7 +231,6 @@ public class CalendarService {
         private LocalDateTime updatedAt;
         private LocalDateTime cancelledAt;
 
-        // Getter e Setter
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
 
