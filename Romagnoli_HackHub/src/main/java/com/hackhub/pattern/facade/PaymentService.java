@@ -31,7 +31,7 @@ public class PaymentService {
     @Value("${payment.service.currency:EUR}")
     private String defaultCurrency;
 
-    // Mappa per tracciare le transazioni (simula database esterno)
+    // Mappa per tracciare le transazioni
     private final Map<String, PaymentTransaction> transactions = new HashMap<>();
 
     /**
@@ -55,10 +55,10 @@ public class PaymentService {
             currency = defaultCurrency;
         }
 
-        // Genera ID transazione
+        //genera l'id per la transazione
         String transactionId = generateTransactionId();
 
-        // Crea la transazione
+        //crea la transazione
         PaymentTransaction transaction = new PaymentTransaction();
         transaction.setId(transactionId);
         transaction.setAmount(amount);
@@ -71,13 +71,12 @@ public class PaymentService {
         transaction.setCreatedAt(LocalDateTime.now());
         transaction.setHackathonName(hackathonName);
 
-        // Simula chiamata API al servizio esterno
+        //simula una chiamata API al servizio esterno
         if ("stripe".equalsIgnoreCase(provider)) {
             return processStripePayment(transaction);
         } else if ("paypal".equalsIgnoreCase(provider)) {
             return processPayPalPayment(transaction);
         } else {
-            // Mock provider
             return processMockPayment(transaction);
         }
     }
@@ -91,9 +90,8 @@ public class PaymentService {
             throw new RuntimeException("Transaction not found: " + transactionId);
         }
 
-        // Simula aggiornamento dello stato
+        //simula l'aggiornamento dello stato
         if ("PENDING".equals(transaction.getStatus())) {
-            // Simula che il pagamento vada a buon fine dopo qualche secondo
             if (transaction.getCreatedAt().plusSeconds(5).isBefore(LocalDateTime.now())) {
                 transaction.setStatus("COMPLETED");
                 transaction.setCompletedAt(LocalDateTime.now());
@@ -117,7 +115,7 @@ public class PaymentService {
             throw new RuntimeException("Only completed transactions can be refunded");
         }
 
-        // Crea transazione di rimborso
+        //crea la transazione di rimborso
         PaymentTransaction refund = new PaymentTransaction();
         refund.setId("refund_" + transactionId);
         refund.setAmount(transaction.getAmount());
@@ -132,7 +130,7 @@ public class PaymentService {
 
         transactions.put(refund.getId(), refund);
 
-        // Aggiorna transazione originale
+        //aggiorna la transazione originale
         transaction.setRefundTransactionId(refund.getId());
         transactions.put(transactionId, transaction);
 
@@ -152,23 +150,23 @@ public class PaymentService {
     }
 
     /**
-     * Metodo per integrazione con Stripe (mock)
+     * Metodo per integrazione con Stripe
      */
     private PaymentTransaction processStripePayment(PaymentTransaction transaction) {
         logger.info("Processing Stripe payment for: {}", transaction.getRecipientEmail());
 
-        // Simula chiamata API a Stripe
+        // Simula la chiamata API a Stripe
         String stripeChargeId = "ch_" + UUID.randomUUID().toString().substring(0, 10);
         transaction.setExternalId(stripeChargeId);
         transaction.setProvider("Stripe");
 
-        // Simula pagamento in corso
+        //pagamento in corso (simulazione)
         transaction.setStatus("PROCESSING");
         transactions.put(transaction.getId(), transaction);
 
         simulateNetworkDelay(2000);
 
-        // Simula completamento
+        //completamento del pagamento (simulazione)
         transaction.setStatus("COMPLETED");
         transaction.setCompletedAt(LocalDateTime.now());
         transaction.setExternalStatus("succeeded");
@@ -180,12 +178,12 @@ public class PaymentService {
     }
 
     /**
-     * Metodo per integrazione con PayPal (mock)
+     * Metodo per integrazione con PayPal
      */
     private PaymentTransaction processPayPalPayment(PaymentTransaction transaction) {
         logger.info("Processing PayPal payment for: {}", transaction.getRecipientEmail());
 
-        // Simula chiamata API a PayPal
+        //simula la chiamata API a PayPal
         String paypalPaymentId = "PAY-" + UUID.randomUUID().toString().substring(0, 8);
         transaction.setExternalId(paypalPaymentId);
         transaction.setProvider("PayPal");
@@ -206,7 +204,7 @@ public class PaymentService {
     }
 
     /**
-     * Processa pagamento mock (per testing)
+     * Processa pagamento mock
      */
     private PaymentTransaction processMockPayment(PaymentTransaction transaction) {
         logger.info("Processing mock payment for: {}", transaction.getRecipientName());
@@ -214,13 +212,13 @@ public class PaymentService {
         transaction.setExternalId("mock_" + UUID.randomUUID().toString());
         transaction.setProvider("Mock Payment Service");
 
-        // Simula elaborazione
+        // Simula l'elaborazione
         transaction.setStatus("PROCESSING");
         transactions.put(transaction.getId(), transaction);
 
         simulateNetworkDelay(1000);
 
-        // Completa il pagamento
+        //completa il pagamento
         transaction.setStatus("COMPLETED");
         transaction.setCompletedAt(LocalDateTime.now());
         transaction.setExternalStatus("mock_success");
@@ -232,7 +230,7 @@ public class PaymentService {
     }
 
     /**
-     * Crea transazione mock (per quando il servizio è disabilitato)
+     * Crea transazione per quando il servizio è disabilitato
      */
     private PaymentTransaction createMockTransaction(BigDecimal amount, String teamName,
                                                      String hackathonName) {
@@ -251,8 +249,6 @@ public class PaymentService {
         transactions.put(transaction.getId(), transaction);
         return transaction;
     }
-
-    // ========== METODI DI UTILITÀ ==========
 
     private String generateTransactionId() {
         return "tx_" + System.currentTimeMillis() + "_" +
@@ -283,7 +279,7 @@ public class PaymentService {
         private String recipientEmail;
         private String recipientFullName;
         private String description;
-        private String status; // PENDING, PROCESSING, COMPLETED, FAILED, REFUNDED
+        private String status;
         private String externalStatus;
         private String provider;
         private String hackathonName;
@@ -292,7 +288,6 @@ public class PaymentService {
         private String parentTransactionId;
         private String refundTransactionId;
 
-        // Getter e Setter
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
 
