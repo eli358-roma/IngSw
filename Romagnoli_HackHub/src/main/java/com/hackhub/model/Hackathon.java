@@ -33,7 +33,7 @@ public class Hackathon {
     private LocalDateTime endDate;
 
     @Column(nullable = false)
-    private String status = "INSCRIZIONE"; // "INSCRIZIONE", "IN_CORSO", "IN_VALUTAZIONE", "CONCLUSO"
+    private String status = "INSCRIZIONE";
 
     @Column(nullable = false)
     private Integer maxTeamSize;
@@ -41,7 +41,6 @@ public class Hackathon {
     @Column
     private Double prizeMoney;
 
-    // ========== RELAZIONI ==========
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organizer_id", nullable = false)
@@ -69,8 +68,6 @@ public class Hackathon {
     @Column
     private Long winnerTeamId;
 
-    // ========== COSTRUTTORI ==========
-
     public Hackathon() {}
 
     public Hackathon(String name, String description, String rules,
@@ -94,21 +91,20 @@ public class Hackathon {
         this(name, description, rules, registrationDeadline, startDate, endDate, maxTeamSize, organizer);
         this.prizeMoney = prizeMoney;
     }
-    
-    // ========== METODI DI UTILITÀ ==========
-    
+
     public boolean isRegistrationOpen() {
         return "INSCRIZIONE".equals(status) &&
                 LocalDateTime.now().isBefore(registrationDeadline);
     }
 
     public boolean isInProgress() {
-        return "IN_CORSO".equals(status) &&
-                LocalDateTime.now().isAfter(startDate) &&
-                LocalDateTime.now().isBefore(endDate);
+        System.out.println("=== Verifica isInProgress ===");
+        System.out.println("Status attuale: '" + this.status + "'");
+        System.out.println("Confronto con IN_CORSO: " + "IN_CORSO".equals(this.status));
+
+        return "IN_CORSO".equals(this.status);
     }
 
-    // ========== GETTER E SETTER ==========
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -119,28 +115,20 @@ public class Hackathon {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public String getRules() { return rules; }
-    public void setRules(String rules) { this.rules = rules; }
 
     public LocalDateTime getRegistrationDeadline() { return registrationDeadline; }
     public void setRegistrationDeadline(LocalDateTime registrationDeadline) {
         this.registrationDeadline = registrationDeadline;
     }
 
-    public LocalDateTime getStartDate() { return startDate; }
-    public void setStartDate(LocalDateTime startDate) { this.startDate = startDate; }
-
     public LocalDateTime getEndDate() { return endDate; }
-    public void setEndDate(LocalDateTime endDate) { this.endDate = endDate; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
     public Integer getMaxTeamSize() { return maxTeamSize; }
-    public void setMaxTeamSize(Integer maxTeamSize) { this.maxTeamSize = maxTeamSize; }
 
     public Double getPrizeMoney() { return prizeMoney; }
-    public void setPrizeMoney(Double prizeMoney) { this.prizeMoney = prizeMoney; }
 
     public User getOrganizer() { return organizer; }
     public void setOrganizer(User organizer) { this.organizer = organizer; }
@@ -166,5 +154,4 @@ public class Hackathon {
                 ", teams=" + (teams != null ? teams.size() : 0) +
                 '}';
     }
-
 }
