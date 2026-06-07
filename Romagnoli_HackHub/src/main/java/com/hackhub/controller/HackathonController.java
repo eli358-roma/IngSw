@@ -1,9 +1,13 @@
 package com.hackhub.controller;
 
 import com.hackhub.model.Hackathon;
+import com.hackhub.model.Team;
 import com.hackhub.model.User;
 import com.hackhub.service.HackathonService;
+import com.hackhub.service.NotificationService;
+import com.hackhub.service.TeamService;
 import com.hackhub.repository.HackathonRepository;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +27,12 @@ public class HackathonController {
     @Autowired
     private HackathonRepository hackathonRepository;
 
+    @Autowired
+    private TeamService teamService;
+
+    @Autowired
+    private NotificationService notificationService;
+
     @PostMapping
     public ResponseEntity<Hackathon> createHackathon(@RequestBody Map<String, Object> request) {
         String name = (String) request.get("name");
@@ -36,8 +46,15 @@ public class HackathonController {
         Integer maxTeamSize = Integer.valueOf(request.get("maxTeamSize").toString());
         Long organizerId = Long.valueOf(request.get("organizerId").toString());
 
+        //Gestione premio
+        Double prizeMoney = 0.0;
+        if (request.containsKey("prizeMoney") && request.get("prizeMoney") != null) {
+            prizeMoney = Double.valueOf(request.get("prizeMoney").toString());
+        }
+
         Hackathon hackathon = hackathonService.createHackathon(
-                name, description, rules, regDeadline, startDate, endDate, maxTeamSize, organizerId);
+                name, description, rules, regDeadline, startDate, endDate,
+                maxTeamSize, organizerId, prizeMoney);
 
         return ResponseEntity.ok(hackathon);
     }
@@ -54,10 +71,42 @@ public class HackathonController {
         return ResponseEntity.ok(hackathonService.updateStatus(id, newStatus));
     }
 
-    @PutMapping("/{id}/declare-winner")
-    public ResponseEntity<Hackathon> declareWinner(@PathVariable Long id, @RequestBody Map<String, Long> request) {
-        Long teamId = request.get("teamId");
-        return ResponseEntity.ok(hackathonService.declareWinner(id, teamId));
+    @PostMapping("/{id}/declare-winner")
+    public ResponseEntity<String> declareWinner(@PathVariable Long id,
+                                                @RequestBody Map<String, Long> request,
+                                                HttpSession session) {
+        try {
+            Long userId = (Long) session.getAttribute("userId");
+            Long teamId = request.get("teamId");
+
+            Hackathon hackathon = hackathonService.getHackathonById(id);
+
+            // Viene verificato che l'utente sia l'organizzatore
+            if (!hackathon.getOrganizer().getId().equals(userId)) {
+                return ResponseEntity.status(403).body("Solo l'organizzatore può proclamare il vincitore");
+            }
+
+            //Viene verificato che l'hackathon sia concluso
+            if (!"CONCLUSO".equals(hackathon.getStatus())) {
+                return ResponseEntity.badRequest().body("L'hackathon deve essere concluso");
+            }
+
+            Team team = teamService.getTeamById(teamId);
+            hackathon.setWinnerTeamId(teamId);
+            hackathonRepository.save(hackathon);
+
+            //notifica il team vincitore
+            String message = "Congratulazioni! Il tuo team " + team.getName() +
+                    " ha vinto l'hackathon " + hackathon.getName() + "!";
+            for (User member : team.getMembers()) {
+                notificationService.sendNotification("EMAIL", message, member);
+            }
+
+            return ResponseEntity.ok("Vincitore proclamato: " + team.getName());
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Errore: " + e.getMessage());
+        }
     }
 
     @GetMapping
@@ -120,6 +169,4 @@ public class HackathonController {
 
         return ResponseEntity.ok(summary);
     }
-
 }
-
