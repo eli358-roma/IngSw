@@ -52,6 +52,12 @@
                     </div>
 
                     <div class="col-md-4 mb-3">
+                        <label class="form-label">Premio in Denaro (€)</label>
+                        <input type="number" name="prizeMoney" class="form-control" min="0" step="0.01" value="0">
+                        <small class="text-muted">Inserisci 0 se non c'è premio</small>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">Organizzatore</label>
                         <select name="organizerId" class="form-select" required>
                             <option value="">Seleziona...</option>
@@ -89,7 +95,6 @@
 </div>
 
 <script>
-    // Aggiungi un po' di JavaScript per gestire il form
     document.querySelector('form').addEventListener('submit', function(e) {
         e.preventDefault();
 
