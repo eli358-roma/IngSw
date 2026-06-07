@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="'HackHub - ' + ${hackathon.name}">HackHub - Dettaglio Hackathon</title>
+    <title>HackHub - Lista Hackathon</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
         :root {
             --primary-color: #4361ee;
             --secondary-color: #3a0ca3;
+            --success-color: #4cc9f0;
+            --warning-color: #f72585;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -18,23 +20,32 @@
         .navbar-custom {
             background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
         }
-        .detail-card {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        .card-hackathon {
+            border-left: 5px solid var(--primary-color);
+            transition: transform 0.3s, box-shadow 0.3s;
         }
-        .status-badge-large {
+        .card-hackathon:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .btn-hackhub {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
             padding: 8px 20px;
-            border-radius: 30px;
-            font-size: 1rem;
+            border-radius: 8px;
+            transition: all 0.3s;
         }
-        .team-card {
-            transition: transform 0.3s;
-        }
-        .team-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        .btn-hackhub:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(67, 97, 238, 0.3);
+            color: white;
         }
     </style>
 </head>
@@ -50,156 +61,103 @@
             <a href="/dashboard" class="nav-link">
                 <i class="bi bi-speedometer2 me-1"></i>Dashboard
             </a>
-            <a href="/hackathons" class="nav-link active">
-                <i class="bi bi-trophy me-1"></i>Hackathon
-            </a>
         </div>
     </div>
 </nav>
 
-<div class="container mt-4" th:with="h=${hackathon}">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/dashboard" class="text-decoration-none">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="/hackathons" class="text-decoration-none">Hackathon</a></li>
-            <li class="breadcrumb-item active" th:text="${h.name}">Nome Hackathon</li>
-        </ol>
-    </nav>
-
+<div class="container mt-4">
     <!-- Header -->
-    <div class="detail-card mb-4">
-        <div class="row">
-            <div class="col-md-8">
-                <h1 th:text="${h.name}">Nome Hackathon</h1>
-                <p class="text-muted" th:text="${h.description}">Descrizione...</p>
-            </div>
-            <div class="col-md-4 text-end">
-                    <span th:switch="${h.status}" class="status-badge-large">
-                        <span th:case="'INSCRIZIONE'" class="badge bg-primary">In Iscrizione</span>
-                        <span th:case="'IN_CORSO'" class="badge bg-success">In Corso</span>
-                        <span th:case="'IN_VALUTAZIONE'" class="badge bg-warning">In Valutazione</span>
-                        <span th:case="'CONCLUSO'" class="badge bg-secondary">Concluso</span>
-                    </span>
-                <div th:if="${session.userId == hackathon.organizer.id}" class="mt-3">
-                    <a th:href="@{/hackathons/{id}/manage(id=${hackathon.id})}"
-                       class="btn btn-warning">
-                        <i class="bi bi-gear me-2"></i>Gestisci Hackathon
-                    </a>
-                </div>
-            </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="bi bi-trophy me-2 text-primary"></i>Lista Hackathon</h1>
+            <p class="text-muted">Gestisci tutti gli hackathon della piattaforma</p>
+        </div>
+        <div>
+            <a th:if="${session.userRole == 'ORGANIZER'}"
+               href="/hackathons/create"
+               class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i>Nuovo Hackathon
+            </a>
         </div>
     </div>
 
-    <!-- informazioni dettagliate -->
-    <div class="row">
-        <div class="col-md-4">
-            <div class="detail-card mb-4">
-                <h5><i class="bi bi-info-circle me-2 text-primary"></i>Informazioni</h5>
-                <hr>
-                <div class="mb-3">
-                    <small class="text-muted d-block">Organizzatore</small>
-                    <strong th:text="${h.organizer != null ? h.organizer.username : 'N/D'}">Mario Rossi</strong>
-                </div>
-                <div class="mb-3">
-                    <small class="text-muted d-block">Giudice</small>
-                    <strong th:text="${h.judge != null ? h.judge.username : 'Non assegnato'}">Luigi Verdi</strong>
-                </div>
-                <div class="mb-3">
-                    <small class="text-muted d-block">Mentori</small>
-                    <div th:if="${h.mentors != null and !h.mentors.isEmpty()}">
-                            <span class="badge bg-info me-1" th:each="mentor : ${h.mentors}"
-                                  th:text="${mentor.username}">Mentor</span>
-                    </div>
-                    <span th:if="${h.mentors == null or h.mentors.isEmpty()}" class="text-muted">
-                            Nessun mentore assegnato
-                        </span>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="detail-card mb-4">
-                <h5><i class="bi bi-calendar me-2 text-primary"></i>Date</h5>
-                <hr>
-                <div class="mb-3">
-                    <small class="text-muted d-block">Scadenza Iscrizioni</small>
-                    <strong th:text="${#temporals.format(h.registrationDeadline, 'dd/MM/yyyy HH:mm')}">01/01/2024 00:00</strong>
-                </div>
-                <div class="mb-3">
-                    <small class="text-muted d-block">Data Inizio</small>
-                    <strong th:text="${#temporals.format(h.startDate, 'dd/MM/yyyy HH:mm')}">02/01/2024 00:00</strong>
-                </div>
-                <div class="mb-3">
-                    <small class="text-muted d-block">Data Fine</small>
-                    <strong th:text="${#temporals.format(h.endDate, 'dd/MM/yyyy HH:mm')}">05/01/2024 00:00</strong>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="detail-card mb-4">
-                <h5><i class="bi bi-trophy me-2 text-primary"></i>Premio e Regole</h5>
-                <hr>
-                <div class="mb-3">
-                    <small class="text-muted d-block">Premio in Denaro</small>
-                    <strong th:text="${h.prizeMoney != null ? h.prizeMoney + ' €' : 'Non specificato'}">5000 €</strong>
-                </div>
-                <div class="mb-3">
-                    <small class="text-muted d-block">Dimensione Massima Team</small>
-                    <strong th:text="${h.maxTeamSize}">4</strong> membri
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Regolamento -->
-    <div class="detail-card mb-4">
-        <h5><i class="bi bi-file-text me-2 text-primary"></i>Regolamento</h5>
-        <hr>
-        <p th:text="${h.rules}" class="mb-0">Regolamento...</p>
-    </div>
-
-    <!-- Team iscritti -->
-    <div class="detail-card">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5><i class="bi bi-people me-2 text-primary"></i>Team Iscritti</h5>
-            <span class="badge bg-primary" th:text="${#lists.size(teams)} + ' team'">3 team</span>
-        </div>
-        <hr>
-
-        <div th:if="${teams != null and !teams.isEmpty()}">
+    <!-- Filtri -->
+    <div class="card mb-4">
+        <div class="card-body">
             <div class="row">
-                <div class="col-md-6 mb-3" th:each="team : ${teams}">
-                    <div class="card team-card">
-                        <div class="card-body">
-                            <h6 th:text="${team.name}">Nome Team</h6>
-                            <p class="small text-muted mb-2">
-                                Creato da: <span th:text="${team.creator != null ? team.creator.username : 'N/D'}">Mario</span>
-                            </p>
-                            <div class="mb-2">
-                                    <span class="badge bg-info me-1" th:each="member : ${team.members}"
-                                          th:text="${member.username}">Membro</span>
+                <div class="col-md-4">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">Tutti gli stati</option>
+                        <option value="INSCRIZIONE">In Iscrizione</option>
+                        <option value="IN_CORSO">In Corso</option>
+                        <option value="IN_VALUTAZIONE">In Valutazione</option>
+                        <option value="CONCLUSO">Concluso</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <input type="text" class="form-control" id="searchInput" placeholder="Cerca hackathon...">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista hackathon -->
+    <div th:if="${hackathons != null and !hackathons.isEmpty()}">
+        <div class="row">
+            <div class="col-md-6 col-lg-4 mb-4" th:each="hackathon : ${hackathons}">
+                <div class="card h-100 card-hackathon">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title" th:text="${hackathon.name}">Nome Hackathon</h5>
+                            <span th:switch="${hackathon.status}" class="status-badge">
+                                    <span th:case="'INSCRIZIONE'" class="badge bg-primary">In Iscrizione</span>
+                                    <span th:case="'IN_CORSO'" class="badge bg-success">In Corso</span>
+                                    <span th:case="'IN_VALUTAZIONE'" class="badge bg-warning">In Valutazione</span>
+                                    <span th:case="'CONCLUSO'" class="badge bg-secondary">Concluso</span>
+                                </span>
+                        </div>
+                        <p class="card-text text-muted" th:text="${hackathon.description}">Descrizione...</p>
+
+                        <div class="mt-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <small><i class="bi bi-people me-1"></i>Team:</small>
+                                <span class="badge bg-info" th:text="${#lists.size(hackathon.teams)}">0</span>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small>
-                                    <i class="bi bi-check-circle me-1"
-                                       th:classappend="${team.hasSubmittedProject()} ? 'text-success' : 'text-secondary'"></i>
-                                    <span th:text="${team.hasSubmittedProject()} ? 'Progetto inviato' : 'Nessun progetto'"></span>
-                                </small>
-                                <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-sm btn-outline-primary">
-                                    Dettagli
-                                </a>
+                            <div class="d-flex justify-content-between mb-2">
+                                <small><i class="bi bi-calendar me-1"></i>Iscrizioni fino:</small>
+                                <small th:text="${#temporals.format(hackathon.registrationDeadline, 'dd/MM/yyyy')}">01/01/2024</small>
                             </div>
+                            <div class="d-flex justify-content-between">
+                                <small><i class="bi bi-person-badge me-1"></i>Organizzatore:</small>
+                                <small th:text="${hackathon.organizer != null ? hackathon.organizer.username : 'N/D'}">Admin</small>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 d-flex gap-2">
+                            <a th:href="@{/hackathons/{id}(id=${hackathon.id})}" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                <i class="bi bi-eye me-1"></i>Dettagli
+                            </a>
+                            <a th:href="@{/hackathons/{id}/manage(id=${hackathon.id})}" class="btn btn-sm btn-outline-success flex-grow-1">
+                                <i class="bi bi-gear me-1"></i>Gestisci
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div th:if="${teams == null or teams.isEmpty()}" class="text-center py-4">
-            <i class="bi bi-people display-4 text-muted"></i>
-            <p class="text-muted mt-2">Nessun team iscritto a questo hackathon</p>
-        </div>
+    <!-- Nessun hackathon -->
+    <div th:if="${hackathons == null or hackathons.isEmpty()}" class="text-center py-5">
+        <i class="bi bi-calendar-x display-1 text-muted"></i>
+        <h3 class="mt-3 text-muted">Nessun hackathon disponibile</h3>
+        <p class="text-muted">Inizia creando il tuo primo hackathon!</p>
+        <!-- Pulsante visibile SOLO agli ORGANIZZATORI -->
+        <a th:if="${session.userRole == 'ORGANIZER'}"
+           href="/hackathons/create"
+           class="btn btn-hackhub mt-3">
+            <i class="bi bi-plus-circle me-2"></i>Crea Nuovo Hackathon
+        </a>
     </div>
 </div>
 
