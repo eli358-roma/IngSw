@@ -2,9 +2,11 @@ package com.hackhub.controller;
 
 import com.hackhub.model.Hackathon;
 import com.hackhub.model.Team;
+import com.hackhub.model.User;
 import com.hackhub.service.HackathonService;
 import com.hackhub.service.TeamService;
 import com.hackhub.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -25,8 +27,7 @@ public class PageController {
     @Autowired
     private UserService userService;
 
-    // ========== HACKATHON PAGES ==========
-
+    //hackathon pages
     @GetMapping("/hackathons")
     public String hackathonsPage(Model model) {
         List<Hackathon> hackathons = hackathonService.getAllHackathons();
@@ -45,23 +46,43 @@ public class PageController {
 
     @GetMapping("/hackathons/{id}")
     public String hackathonDetailPage(@PathVariable Long id, Model model) {
-        Hackathon hackathon = hackathonService.getHackathonById(id); // Dovrai aggiungere questo metodo nel service
+        Hackathon hackathon = hackathonService.getHackathonById(id);
         model.addAttribute("hackathon", hackathon);
         model.addAttribute("teams", teamService.getTeamsByHackathon(id));
         return "hackathons/detail";
     }
 
     @GetMapping("/hackathons/{id}/manage")
-    public String manageHackathonPage(@PathVariable Long id, Model model) {
-        Hackathon hackathon = hackathonService.getHackathonById(id);
-        model.addAttribute("hackathon", hackathon);
-        model.addAttribute("availableJudges", userService.getAvailableJudges());
-        model.addAttribute("availableMentors", userService.getAvailableMentors());
-        return "hackathons/manage";
+    public String manageHackathonPage(@PathVariable Long id, Model model, HttpSession session) {
+        try {
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) {
+                return "redirect:/login";
+            }
+
+            // Recupera l'hackathon
+            Hackathon hackathon = hackathonService.getHackathonById(id);
+
+            // Verifica che l'utente sia l'organizzatore
+            if (!hackathon.getOrganizer().getId().equals(userId)) {
+                model.addAttribute("error", "Solo l'organizzatore può gestire questo hackathon");
+                return "error";
+            }
+
+            // Aggiungi i dati necessari per i select
+            model.addAttribute("hackathon", hackathon);
+            model.addAttribute("availableJudges", userService.getAvailableJudges());
+            model.addAttribute("availableMentors", userService.getAvailableMentors());
+
+            return "hackathons/manage";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Errore nel caricamento della pagina: " + e.getMessage());
+            return "error";
+        }
     }
 
-    // ========== TEAM PAGES ==========
-
+    //Pagina Team
     @GetMapping("/teams")
     public String teamsPage(Model model) {
         model.addAttribute("teams", teamService.getAllTeams());
@@ -82,31 +103,43 @@ public class PageController {
         return "teams/detail";
     }
 
-    // ========== SUBMISSIONS PAGES ==========
+    @GetMapping("/teams/manage/{id}")
+    public String manageTeamPage(@PathVariable Long id, Model model, HttpSession session) {
+        try {
+            Long userId = (Long) session.getAttribute("userId");
+            if (userId == null) {
+                return "redirect:/login";
+            }
 
-    @GetMapping("/submissions")
-    public String submissionsPage(Model model) {
-        model.addAttribute("hackathons", hackathonService.getAllHackathons());
-        return "submissions/list";
+            Team team = teamService.getTeamById(id);
+
+            // Verifica che l'utente sia il creatore
+            if (!team.getCreator().getId().equals(userId)) {
+                model.addAttribute("error", "Solo il creatore del team può gestire i membri");
+                return "error";
+            }
+
+            List<User> availableUsers = teamService.getAvailableUsersForTeam(id);
+
+            model.addAttribute("team", team);
+            model.addAttribute("availableUsers", availableUsers);
+
+            return "teams/manage";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Errore: " + e.getMessage());
+            return "error";
+        }
     }
 
-    @GetMapping("/submissions/review")
-    public String reviewSubmissionsPage(Model model) {
-        // Filtra solo hackathon in valutazione
-        model.addAttribute("hackathons", hackathonService.getHackathonsByStatus("IN_VALUTAZIONE"));
-        return "submissions/review";
-    }
-
-    // ========== JUDGES PAGES ==========
-
+    //Pagina giudici
     @GetMapping("/judges")
     public String judgesPage(Model model) {
         model.addAttribute("judges", userService.getAvailableJudges());
         return "judges/list";
     }
 
-    // ========== MENTORS PAGES ==========
-
+    //pagina mentori
     @GetMapping("/mentors")
     public String mentorsPage(Model model) {
         model.addAttribute("mentors", userService.getAvailableMentors());
@@ -115,11 +148,10 @@ public class PageController {
 
     @GetMapping("/support/requests")
     public String supportRequestsPage(Model model) {
-        // Per ora vuoto, implementeremo dopo
         return "support/requests";
     }
 
-    // ========== REPORTS PAGES ==========
+    //Pagina report
 
     @GetMapping("/reports")
     public String reportsPage(Model model) {
@@ -132,8 +164,7 @@ public class PageController {
         return "reports/generate";
     }
 
-    // ========== ADMIN PAGES ==========
-
+    //Pagina Admin
     @GetMapping("/admin")
     public String adminPage(Model model) {
         model.addAttribute("users", userService.getAllUsers());
@@ -141,10 +172,14 @@ public class PageController {
         return "admin/dashboard";
     }
 
-    // ========== USER PROFILE ==========
-
+    //profilo user
     @GetMapping("/profile")
     public String profilePage(Model model) {
         return "profile/index";
+    }
+
+    @GetMapping("/my-invites")
+    public String myInvitesPage() {
+        return "user/invites";
     }
 }
