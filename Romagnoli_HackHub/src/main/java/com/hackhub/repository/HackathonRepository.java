@@ -9,4 +9,5 @@ import java.util.List;
 public interface HackathonRepository extends JpaRepository<Hackathon, Long> {
     List<Hackathon> findByStatus(String status);
     List<Hackathon> findByOrganizerId(Long organizerId); // Aggiungi questo metodo
+    List<Hackathon> findByJudgeId(Long judgeId);
 }
