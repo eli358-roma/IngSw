@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestisci Team - <span th:text="${team.name}"></span></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">HackHub</a>
+        <div class="text-white">
+            <span th:text="${session.username}"></span>
+            <a href="/logout" class="btn btn-sm btn-light ms-2">Logout</a>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h4>Gestisci Team: <span th:text="${team.name}"></span></h4>
+        </div>
+        <div class="card-body">
+            <!-- Messaggi -->
+            <div id="messageArea"></div>
+
+            <!-- Membri attuali -->
+            <h5>Membri del Team</h5>
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Ruolo</th>
+                    <th>Azioni</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="member : ${team.members}">
+                    <td th:text="${member.username}"></td>
+                    <td th:text="${member.email}"></td>
+                    <td>
+                        <span th:if="${member.id == team.creator.id}" class="badge bg-warning">Creatore</span>
+                        <span th:if="${member.id != team.creator.id}" class="badge bg-secondary">Membro</span>
+                    </td>
+                    <td>
+                        <button th:if="${member.id != team.creator.id}"
+                                class="btn btn-danger btn-sm"
+                                th:onclick="'removeMember(' + ${member.id} + ')'">
+                            Rimuovi
+                        </button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+            <!-- Aggiungi membri -->
+            <hr>
+            <h5>Aggiungi Nuovo Membro</h5>
+            <div class="row mt-3">
+                <div class="col-md-8">
+                    <select id="userIdSelect" class="form-select">
+                        <option value="">Seleziona un partecipante...</option>
+                        <option th:each="user : ${availableUsers}"
+                                th:value="${user.id}"
+                                th:text="${user.username} + ' (' + user.email + ')'"></option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-success w-100" onclick="addMember()">
+                        <i class="bi bi-person-plus"></i> Invita nel Team
+                    </button>
+                </div>
+            </div>
+
+            <hr>
+            <a th:href="@{/teams/{id}(id=${team.id})}" class="btn btn-secondary">Torna al Team</a>
+        </div>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const teamId = /*[[${team.id}]]*/ 0;
+    /*]]>*/
+
+    console.log('Team ID caricato:', teamId);
+
+    function showMessage(message, isError = false) {
+        const messageArea = document.getElementById('messageArea');
+        const alertClass = isError ? 'alert-danger' : 'alert-success';
+        messageArea.innerHTML = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        setTimeout(() => {
+            const alert = messageArea.querySelector('.alert');
+            if (alert) alert.remove();
+        }, 3000);
+    }
+
+    function addMember() {
+        const userId = document.getElementById('userIdSelect').value;
+
+        if (!userId) {
+            showMessage('Seleziona un partecipante da invitare', true);
+            return;
+        }
+
+        console.log('Invito utente ID:', userId, 'nel team ID:', teamId);
+
+        fetch('/api/teams/' + teamId + '/invite', {  // <-- MODIFICATO
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: parseInt(userId) })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            } else {
+                return response.text().then(text => { throw new Error(text); });
+            }
+        })
+        .then(message => {
+            showMessage(message);
+            // Ricarica la lista degli utenti disponibili
+            setTimeout(() => location.reload(), 1500);
+        })
+        .catch(error => {
+            showMessage('Errore: ' + error.message, true);
+        });
+    }
+
+    function removeMember(userId) {
+        if (!confirm('Sei sicuro di voler rimuovere questo membro dal team?')) {
+            return;
+        }
+
+        console.log('Rimuovo utente ID:', userId, 'dal team ID:', teamId);
+
+        fetch('/api/teams/' + teamId + '/leave', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: parseInt(userId) })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.text();
+            } else {
+                return response.text().then(text => { throw new Error(text); });
+            }
+        })
+        .then(message => {
+            showMessage(message);
+            setTimeout(() => location.reload(), 1500);
+        })
+        .catch(error => {
+            console.error('Errore:', error);
+            showMessage('Errore: ' + error.message, true);
+        });
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
